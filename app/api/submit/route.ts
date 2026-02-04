@@ -8,34 +8,46 @@ const GOOGLE_PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY;
 
 export async function POST(req: Request) {
   try {
-    const { name, email, college } = await req.json();
+    // 1. Capture all four fields from your updated form
+    const { name, college, email, phone } = await req.json();
+
+    if (!GOOGLE_CLIENT_EMAIL || !GOOGLE_PRIVATE_KEY || !SPREADSHEET_ID) {
+      throw new Error("Missing Environment Variables");
+    }
 
     const serviceAccountAuth = new JWT({
       email: GOOGLE_CLIENT_EMAIL,
-      key: GOOGLE_PRIVATE_KEY!.replace(/\\n/g, '\n'),
+      key: GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
 
-    const doc = new GoogleSpreadsheet(SPREADSHEET_ID!, serviceAccountAuth);
+    const doc = new GoogleSpreadsheet(SPREADSHEET_ID, serviceAccountAuth);
     await doc.loadInfo();
     const sheet = doc.sheetsByIndex[0];
 
-    // Load existing rows to find the next empty row
-    const rows = await sheet.getRows();
-    const nextRowIndex = rows.length + 2; // +2 because: +1 for header row, +1 for 1-based index
-    
-    // Use raw values to append - this is the most reliable method
-    await sheet.addRows([
-      [
-        new Date().toLocaleString(),
-        name,
-        college
-      ]
-    ]);
+    // 2. Generate IST Timestamp for Yuva Mahotsav
+    const istTimestamp = new Date().toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+
+    // 3. Append all data columns
+    // Ensure your Google Sheet Row 1 has headers: Timestamp, Name, College, Email, Phone
+    await sheet.addRow({
+      Timestamp: istTimestamp,
+      Name: name.toUpperCase(), // Standardizing names for the sheet
+      College: college,
+      Email: email,
+      Phone: phone
+    });
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error('Error:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    console.error('Operation Error:', error);
+    return NextResponse.json(
+      { success: false, error: error.message }, 
+      { status: 500 }
+    );
   }
 }
