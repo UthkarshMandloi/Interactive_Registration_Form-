@@ -2,6 +2,8 @@
 
 Production-ready Next.js platform for collecting student details, generating personalized certificate previews, and distributing downloadable certificates at high scale (50,000+ participants).
 
+- Link: https://certificat-website.vercel.app/
+
 ## Overview
 
 This project is built for event operations where a large number of students need to receive certificates quickly and reliably.
