@@ -24,44 +24,53 @@ export default function GoogleAuthModal({ isOpen, onClose, onSuccess, t }: Googl
     if (isOpen && typeof window !== 'undefined') {
       const initGsi = () => {
         if (window.google?.accounts?.id) {
-          window.google.accounts.id.initialize({
-            client_id: googleClientId || "667102780022-vtqhifuvuvisji69e2ofjkul8nb60vvi.apps.googleusercontent.com",
-            callback: (response: any) => {
-              try {
-                const base64Url = response.credential.split('.')[1];
-                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-                const jsonPayload = decodeURIComponent(
-                  atob(base64)
-                    .split('')
-                    .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-                    .join('')
-                );
-                const payload = JSON.parse(jsonPayload);
-                onSuccess({
-                  email: payload.email,
-                  name: payload.name,
-                  picture: payload.picture,
-                });
-              } catch (e) {
-                console.error("Failed to parse Google JWT", e);
-              }
-            },
-            auto_select: true,
-          });
-
-          // Automatically prompt One-Tap on mobile & desktop Chrome
-          window.google.accounts.id.prompt();
-
-          const btnContainer = document.getElementById('gsi-button-container');
-          if (btnContainer) {
-            btnContainer.innerHTML = '';
-            window.google.accounts.id.renderButton(btnContainer, {
-              theme: 'filled_blue',
-              size: 'large',
-              width: 280,
-              text: 'continue_with',
-              shape: 'pill',
+          try {
+            window.google.accounts.id.initialize({
+              client_id: googleClientId || "667102780022-vtqhifuvuvisji69e2ofjkul8nb60vvi.apps.googleusercontent.com",
+              callback: (response: any) => {
+                try {
+                  const base64Url = response.credential.split('.')[1];
+                  const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                  const jsonPayload = decodeURIComponent(
+                    atob(base64)
+                      .split('')
+                      .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+                      .join('')
+                  );
+                  const payload = JSON.parse(jsonPayload);
+                  onSuccess({
+                    email: payload.email,
+                    name: payload.name,
+                    picture: payload.picture,
+                  });
+                } catch (e) {
+                  console.error("Failed to parse Google JWT", e);
+                }
+              },
+              use_fedcm_for_prompt: false, // Disables FedCM conflict in Chrome
             });
+
+            // Render Google Sign-In button
+            const btnContainer = document.getElementById('gsi-button-container');
+            if (btnContainer) {
+              btnContainer.innerHTML = '';
+              window.google.accounts.id.renderButton(btnContainer, {
+                theme: 'filled_blue',
+                size: 'large',
+                width: 280,
+                text: 'continue_with',
+                shape: 'pill',
+              });
+            }
+
+            // Safely prompt One-Tap without throwing FedCM conflict errors
+            window.google.accounts.id.prompt((notification: any) => {
+              if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                // One-tap skipped or suppressed safely
+              }
+            });
+          } catch (err) {
+            console.warn("GSI initialization warning:", err);
           }
         }
       };

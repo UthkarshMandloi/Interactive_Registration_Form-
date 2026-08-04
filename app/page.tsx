@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import GoogleAuthModal from '@/components/GoogleAuthModal';
+import NssLogoLoader from '@/components/NssLogoLoader';
 import { translations, Language } from '@/lib/translations';
 
 interface UserSession {
@@ -53,7 +54,6 @@ export default function RegistrationPage() {
         localStorage.removeItem('nss_user_session');
       }
     } else {
-      // Auto open modal on load for seamless Chrome/Phone login
       setIsAuthModalOpen(true);
     }
   }, []);
@@ -100,8 +100,7 @@ export default function RegistrationPage() {
         return;
       }
 
-      setStatus('idle');
-
+      // Load draft from localStorage first (fast)
       const localDraft = localStorage.getItem(`nss_draft_${email}`);
       if (localDraft) {
         try {
@@ -110,6 +109,7 @@ export default function RegistrationPage() {
         } catch (e) {}
       }
 
+      // Fetch saved draft from Cloud Google Sheet
       const draftRes = await fetch(`/api/draft?email=${encodeURIComponent(email)}`);
       const draftData = await draftRes.json();
       if (draftData.draft) {
@@ -120,6 +120,8 @@ export default function RegistrationPage() {
         }));
         localStorage.setItem(`nss_draft_${email}`, JSON.stringify(draftData.draft));
       }
+      
+      setStatus('idle');
     } catch (err) {
       console.error('Failed to check submission or load draft', err);
       setStatus('idle');
@@ -247,8 +249,11 @@ export default function RegistrationPage() {
           </p>
         </div>
 
-        {/* Status Screen: Success */}
-        {status === 'success' ? (
+        {/* Animated NSS Logo Loader during checking / initial fetch */}
+        {status === 'checking' ? (
+          <NssLogoLoader t={t} />
+        ) : status === 'success' ? (
+          /* Status Screen: Success */
           <div className="bg-[#e6edf5] rounded-3xl p-6 sm:p-12 text-center neu-card shadow-[16px_16px_36px_#c2cfd6,-16px_-16px_36px_#ffffff] border border-white/80">
             <div className="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-500/10 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 neu-knob">
               <svg className="w-8 h-8 sm:w-10 sm:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -266,7 +271,7 @@ export default function RegistrationPage() {
             </div>
           </div>
         ) : status === 'already_submitted' ? (
-          /* Status Screen: Already Submitted (With same green checkmark tick) */
+          /* Status Screen: Already Submitted */
           <div className="bg-[#e6edf5] rounded-3xl p-6 sm:p-12 text-center neu-card shadow-[16px_16px_36px_#c2cfd6,-16px_-16px_36px_#ffffff] border border-white/80">
             <div className="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-500/10 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 neu-knob">
               <svg className="w-8 h-8 sm:w-10 sm:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -551,9 +556,16 @@ export default function RegistrationPage() {
               <button
                 type="submit"
                 disabled={status === 'submitting'}
-                className="w-full py-5 text-white font-black text-base sm:text-lg uppercase tracking-widest rounded-full neu-btn-primary cursor-pointer mt-4"
+                className="w-full py-5 text-white font-black text-base sm:text-lg uppercase tracking-widest rounded-full neu-btn-primary cursor-pointer mt-4 flex items-center justify-center space-x-2"
               >
-                {status === 'submitting' ? t.form.submittingButton : t.form.submitButton}
+                {status === 'submitting' ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>{t.form.submittingButton}</span>
+                  </div>
+                ) : (
+                  <span>{t.form.submitButton}</span>
+                )}
               </button>
             </form>
           </div>

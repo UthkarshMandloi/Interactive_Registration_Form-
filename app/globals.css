@@ -82,6 +82,34 @@ select option {
   box-shadow: 3px 3px 6px #bac6d8, -3px -3px 6px #ffffff;
 }
 
+/* NSS Logo Animated Chakra Spin & Pulse keyframes */
+@keyframes spinSlow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes spinReverseSlow {
+  0% { transform: rotate(360deg); }
+  100% { transform: rotate(0deg); }
+}
+
+@keyframes pulseLogo {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(255, 183, 3, 0.3)); }
+  50% { transform: scale(1.06); filter: drop-shadow(0 0 25px rgba(217, 4, 41, 0.5)); }
+}
+
+.animate-spin-slow {
+  animation: spinSlow 8s linear infinite;
+}
+
+.animate-spin-reverse-slow {
+  animation: spinReverseSlow 6s linear infinite;
+}
+
+.animate-pulse-logo {
+  animation: pulseLogo 3s ease-in-out infinite;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
