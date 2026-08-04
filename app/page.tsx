@@ -1,139 +1,597 @@
 "use client";
-import React, { useState } from 'react';
-import PreviewModal from '@/components/PreviewModal';
-import Image from 'next/image';
 
-export default function Platform() {
-  const [form, setForm] = useState({ name: '', college: '', email: '', phone: '' });
-  const [loading, setLoading] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
+import React, { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
+import Header from '@/components/Header';
+import GoogleAuthModal from '@/components/GoogleAuthModal';
+import { translations, Language } from '@/lib/translations';
+
+interface UserSession {
+  email: string;
+  name?: string;
+  picture?: string;
+}
+
+export default function RegistrationPage() {
+  const [lang, setLang] = useState<Language>('en');
+  const [user, setUser] = useState<UserSession | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [status, setStatus] = useState<'idle' | 'checking' | 'submitting' | 'success' | 'already_submitted'>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [draftSaved, setDraftSaved] = useState(false);
+
+  const showNssRegNo = process.env.NEXT_PUBLIC_SHOW_NSS_REG_NO === 'true';
+
+  const [form, setForm] = useState({
+    nssRegNo: '',
+    name: '',
+    year: '',
+    category: '',
+    branch: '',
+    fatherName: '',
+    dob: '',
+    gender: '',
+    contactNo: '',
+    email: '',
+    bloodGroup: '',
+    address: '',
+  });
+
+  const t = translations[lang];
+  const autosaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Auto check session from localStorage on mount
+  useEffect(() => {
+    const savedUser = localStorage.getItem('nss_user_session');
+    if (savedUser) {
+      try {
+        const parsed = JSON.parse(savedUser);
+        setUser(parsed);
+        checkSubmissionStatusAndLoadDraft(parsed.email);
+      } catch (e) {
+        localStorage.removeItem('nss_user_session');
+      }
+    }
+  }, []);
+
+  // Sync Google Auth email into form email field
+  useEffect(() => {
+    if (user?.email) {
+      setForm((prev) => ({ ...prev, email: user.email }));
+    }
+  }, [user]);
+
+  // Debounced Autosave (Local & Cloud across devices)
+  useEffect(() => {
+    if (!user?.email || status === 'success' || status === 'already_submitted') return;
+
+    // Check if form has any user entered data
+    const hasData = Object.entries(form).some(([key, val]) => key !== 'email' && Boolean(val.trim()));
+    if (!hasData) return;
+
+    // Save to LocalStorage immediately
+    localStorage.setItem(`nss_draft_${user.email}`, JSON.stringify(form));
+    setDraftSaved(true);
+
+    // Debounce cloud draft save to Google Sheet (1.5s delay)
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    autosaveTimerRef.current = setTimeout(() => {
+      fetch('/api/draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email, draftData: form }),
+      }).catch((err) => console.error('Cloud draft autosave error:', err));
+    }, 1500);
+
+    return () => {
+      if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    };
+  }, [form, user, status]);
+
+  const checkSubmissionStatusAndLoadDraft = async (email: string) => {
+    setStatus('checking');
+    try {
+      // 1. Check if user already submitted
+      const res = await fetch(`/api/check-submission?email=${encodeURIComponent(email)}`);
+      const data = await res.json();
+
+      if (data.submitted) {
+        setStatus('already_submitted');
+        return;
+      }
+
+      setStatus('idle');
+
+      // 2. Load draft from localStorage first (fast)
+      const localDraft = localStorage.getItem(`nss_draft_${email}`);
+      if (localDraft) {
+        try {
+          const parsedLocal = JSON.parse(localDraft);
+          setForm((prev) => ({ ...prev, ...parsedLocal, email }));
+        } catch (e) {}
+      }
+
+      // 3. Fetch saved draft from Cloud Google Sheet (for cross-device persistence)
+      const draftRes = await fetch(`/api/draft?email=${encodeURIComponent(email)}`);
+      const draftData = await draftRes.json();
+      if (draftData.draft) {
+        setForm((prev) => ({
+          ...prev,
+          ...draftData.draft,
+          email, // Lock to current Google Email
+        }));
+        localStorage.setItem(`nss_draft_${email}`, JSON.stringify(draftData.draft));
+      }
+    } catch (err) {
+      console.error('Failed to check submission or load draft', err);
+      setStatus('idle');
+    }
+  };
+
+  const handleToggleLang = () => {
+    setLang((prev) => (prev === 'en' ? 'hi' : 'en'));
+  };
+
+  const handleFieldInteraction = () => {
+    if (!user) {
+      setIsAuthModalOpen(true);
+    }
+  };
+
+  const handleGoogleSuccess = (userData: UserSession) => {
+    setUser(userData);
+    localStorage.setItem('nss_user_session', JSON.stringify(userData));
+    setIsAuthModalOpen(false);
+    checkSubmissionStatusAndLoadDraft(userData.email);
+  };
+
+  const handleLogout = () => {
+    if (user?.email) {
+      localStorage.removeItem(`nss_draft_${user.email}`);
+    }
+    setUser(null);
+    localStorage.removeItem('nss_user_session');
+    setStatus('idle');
+    setDraftSaved(false);
+    setForm({
+      nssRegNo: '',
+      name: '',
+      year: '',
+      category: '',
+      branch: '',
+      fatherName: '',
+      dob: '',
+      gender: '',
+      contactNo: '',
+      email: '',
+      bloodGroup: '',
+      address: '',
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setShowPreview(true);
-  };
+    setErrorMessage('');
 
-  const handleConfirm = async () => {
-    setLoading(true);
+    if (!user) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    const cleanPhone = form.contactNo.replace(/\D/g, '');
+    if (cleanPhone.length !== 10) {
+      setErrorMessage(t.status.errorPhoneDigits);
+      return;
+    }
+
+    if (!form.email.toLowerCase().trim().endsWith('@gmail.com')) {
+      setErrorMessage(t.status.errorGmailOnly);
+      return;
+    }
+
+    setStatus('submitting');
+
     try {
       const res = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          googleEmail: user.email,
+          nssRegNo: form.nssRegNo,
+          name: form.name,
+          year: form.year,
+          category: form.category,
+          branch: form.branch,
+          fatherName: form.fatherName,
+          dob: form.dob,
+          gender: form.gender,
+          contactNo: cleanPhone,
+          email: form.email,
+          bloodGroup: form.bloodGroup,
+          address: form.address,
+        }),
       });
-      if (!res.ok) throw new Error("Sheet update failed");
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setStatus('success');
+        // Clear drafts on successful submission
+        localStorage.removeItem(`nss_draft_${user.email}`);
+        fetch(`/api/draft?email=${encodeURIComponent(user.email)}`, { method: 'DELETE' }).catch(() => {});
+      } else if (res.status === 409 || data.error === 'ALREADY_SUBMITTED') {
+        setStatus('already_submitted');
+      } else {
+        setErrorMessage(data.error || t.status.errorGeneral);
+        setStatus('idle');
+      }
     } catch (err) {
       console.error(err);
-      alert("Network error while saving data.");
-    } finally {
-      setLoading(false);
+      setErrorMessage(t.status.errorGeneral);
+      setStatus('idle');
     }
   };
 
   return (
-    // 1. Updated main container to use your generated mandala image as a fixed background
-    <main 
-      className="min-h-screen relative flex items-center justify-center font-sans py-10 bg-fixed bg-cover bg-center bg-no-repeat"
-      style={{ backgroundImage: "url('/mandala_background.jpg')" }}
-    >
+    <div className="min-h-screen flex flex-col bg-[#e6edf5] text-[#0B1B3D] selection:bg-[#0B1B3D] selection:text-white">
       
-      {/* 2. Overlay to ensure the form remains readable against the complex background */}
-      <div className="absolute inset-0 bg-[#2D0A1B]/60 backdrop-blur-[2px] pointer-events-none" />
+      {/* Top Header with Neumorphic Capsule Language Switcher */}
+      <Header
+        lang={lang}
+        onToggleLang={handleToggleLang}
+        t={t}
+        user={user}
+        onLogout={handleLogout}
+      />
 
-      <div className="relative z-10 w-full max-w-4xl px-6">
+      <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-6 sm:px-8 sm:py-10 flex flex-col justify-center">
         
-        {/* 3. Header Section with Logo and Hindi Date */}
-        <div className="flex flex-col items-center mb-8 text-center">
-          <div className="relative p-2 bg-white/10 rounded-full backdrop-blur-md border border-white/20 mb-6 shadow-2xl">
-            <Image 
-              src="/logo-yova-utsav.png" 
-              alt="Yuva Mahotsav Logo" 
-              width={160} 
-              height={160} 
-              className="drop-shadow-[0_0_15px_rgba(255,215,0,0.5)]"
+        {/* Banner Section */}
+        <div className="text-center mb-8 sm:mb-10">
+          <div className="inline-block p-4 sm:p-5 rounded-3xl bg-[#e6edf5] neu-card shadow-[10px_10px_20px_#c2cfd6,-10px_-10px_20px_#ffffff] mb-5">
+            <Image
+              src="/R.png"
+              alt="NSS Logo"
+              width={96}
+              height={96}
+              className="object-contain w-16 h-16 sm:w-24 sm:h-24 mx-auto"
+              priority
             />
           </div>
-          
-          <p className="text-[#FFD700] text-3xl font-bold mb-4 italic tracking-widest drop-shadow-md">
-            ६ से ८ फ़रवरी २०२६
-          </p>
-          
-          <h1 className="text-5xl font-black text-white mb-2 tracking-tight uppercase italic drop-shadow-lg">
-            Get Your Certificate
+
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-[#0B1B3D] tracking-tight uppercase leading-tight mb-2">
+            {t.header.orgTitle}
           </h1>
-          <p className="text-white/80 text-lg max-w-md drop-shadow-md">
-            Celebrating the spirit of <b>Ancient Indian Tradition</b>
+          <h2 className="text-base sm:text-2xl font-black text-[#D90429] tracking-wide mb-2">
+            {t.header.orgSubtitle}
+          </h2>
+          <p className="text-xs sm:text-sm text-[#475569] max-w-lg mx-auto font-medium">
+            {t.header.formSubtitle}
           </p>
         </div>
 
-        {/* 4. Portrait-Style Ornamental Form Card */}
-        <div className="bg-[#3D0C21]/90 backdrop-blur-xl p-8 md:p-12 rounded-[50px] shadow-[0_0_100px_rgba(0,0,0,0.6)] border-2 border-[#FFD700]/30 relative overflow-hidden">
-          
-          {/* Subtle Golden Pattern Overlay */}
-          <div className="absolute inset-0 opacity-5 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/pinstripe.png')]" />
-
-          <form onSubmit={handleSubmit} className="relative z-10 space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-[#FFD700] uppercase tracking-[0.3em] ml-2">Full Name</label>
-                <input 
-                  required 
-                  className="w-full p-5 rounded-2xl bg-black/40 border border-[#FFD700]/30 text-white placeholder:text-white/20 focus:bg-black/60 focus:border-[#FFD700] outline-none transition-all shadow-inner" 
-                  placeholder="As it should appear" 
-                  onChange={e => setForm({...form, name: e.target.value})} 
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-[#FFD700] uppercase tracking-[0.3em] ml-2">University / College</label>
-                <input 
-                  required 
-                  className="w-full p-5 rounded-2xl bg-black/40 border border-[#FFD700]/30 text-white placeholder:text-white/20 focus:bg-black/60 focus:border-[#FFD700] outline-none transition-all shadow-inner" 
-                  placeholder="College Name" 
-                  onChange={e => setForm({...form, college: e.target.value})} 
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-[#FFD700] uppercase tracking-[0.3em] ml-2">Email</label>
-                <input 
-                  required 
-                  type="email"
-                  className="w-full p-5 rounded-2xl bg-black/40 border border-[#FFD700]/30 text-white placeholder:text-white/20 focus:bg-black/60 focus:border-[#FFD700] outline-none transition-all shadow-inner" 
-                  placeholder="example@mail.com" 
-                  onChange={e => setForm({...form, email: e.target.value})} 
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-[#FFD700] uppercase tracking-[0.3em] ml-2">Phone Number</label>
-                <input 
-                  required 
-                  type="tel"
-                  className="w-full p-5 rounded-2xl bg-black/40 border border-[#FFD700]/30 text-white placeholder:text-white/20 focus:bg-black/60 focus:border-[#FFD700] outline-none transition-all shadow-inner" 
-                  placeholder="+91" 
-                  onChange={e => setForm({...form, phone: e.target.value})} 
-                />
-              </div>
+        {/* Status Screen: Success */}
+        {status === 'success' ? (
+          <div className="bg-[#e6edf5] rounded-3xl p-6 sm:p-12 text-center neu-card shadow-[16px_16px_36px_#c2cfd6,-16px_-16px_36px_#ffffff] border border-white/80">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-500/10 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 neu-knob">
+              <svg className="w-8 h-8 sm:w-10 sm:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+              </svg>
             </div>
-
-            <button 
-              disabled={loading} 
-              className="w-full py-6 bg-gradient-to-r from-[#FFD700] via-[#FDB931] to-[#FFD700] text-[#2D0A1B] rounded-full font-black text-xl hover:scale-[1.02] active:scale-95 transition-all shadow-[0_15px_40px_rgba(255,215,0,0.4)] disabled:opacity-50 uppercase tracking-widest border-b-4 border-[#B8860B]"
+            <h3 className="text-2xl sm:text-3xl font-black text-[#0B1B3D] mb-3">
+              {t.status.successTitle}
+            </h3>
+            <p className="text-sm sm:text-lg text-[#475569] max-w-lg mx-auto leading-relaxed mb-8 font-medium">
+              {t.status.successMsg}
+            </p>
+            <div className="p-4 rounded-2xl bg-[#e6edf5] neu-input text-xs font-bold text-[#0B1B3D] max-w-xs mx-auto">
+              NSS (National Service Scheme), IET DAVV
+            </div>
+          </div>
+        ) : status === 'already_submitted' ? (
+          /* Status Screen: Already Submitted */
+          <div className="bg-[#e6edf5] rounded-3xl p-6 sm:p-12 text-center neu-card shadow-[16px_16px_36px_#c2cfd6,-16px_-16px_36px_#ffffff] border border-white/80">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-amber-500/10 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-6 neu-knob">
+              <svg className="w-8 h-8 sm:w-10 sm:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h3 className="text-2xl sm:text-3xl font-black text-[#0B1B3D] mb-3">
+              {t.status.alreadySubmittedTitle}
+            </h3>
+            <p className="text-sm sm:text-base text-[#475569] max-w-lg mx-auto leading-relaxed mb-8 font-medium">
+              {t.status.alreadySubmittedMsg}
+            </p>
+            <button
+              onClick={handleLogout}
+              className="px-6 py-3 rounded-full bg-[#0B1B3D] text-white text-xs uppercase tracking-widest font-black transition neu-btn-primary"
             >
-              {loading ? 'Pranam...' : 'Generate Certificate'}
+              {t.status.submitAnother}
             </button>
-          </form>
-        </div>
-      </div>
+          </div>
+        ) : (
+          /* Main Neumorphic Registration Form Card */
+          <div className="bg-[#e6edf5] p-6 sm:p-10 rounded-3xl neu-card shadow-[18px_18px_40px_#beccd9,-18px_-18px_40px_#ffffff] border border-white/80 relative">
+            
+            {/* Login Prompt Banner if Not Logged In */}
+            {!user ? (
+              <div 
+                onClick={() => setIsAuthModalOpen(true)}
+                className="mb-6 p-4 rounded-2xl bg-[#e6edf5] neu-card shadow-[6px_6px_12px_#c2cfd6,-6px_-6px_12px_#ffffff] border border-[#FFB703]/80 flex items-center justify-between cursor-pointer hover:scale-[1.01] transition group"
+              >
+                <div className="flex items-center space-x-3">
+                  <span className="w-3 h-3 rounded-full bg-[#D90429] animate-ping" />
+                  <p className="text-xs sm:text-sm font-bold text-[#0B1B3D]">
+                    {t.header.loginRequiredNotice}
+                  </p>
+                </div>
+                <span className="text-xs bg-[#0B1B3D] text-[#FFB703] px-3.5 py-1.5 rounded-full font-black uppercase tracking-wider group-hover:scale-105 transition shadow-sm">
+                  Login
+                </span>
+              </div>
+            ) : draftSaved ? (
+              /* Autosave Confirmation Badge */
+              <div className="mb-6 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 text-xs font-bold flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>Draft auto-saved across devices</span>
+                </div>
+                <span className="text-[10px] text-emerald-600/80 font-normal">Synced with Google Account</span>
+              </div>
+            ) : null}
 
-      <PreviewModal 
-        name={form.name} 
-        isOpen={showPreview} 
-        onClose={() => setShowPreview(false)} 
-        onConfirm={handleConfirm} 
+            {/* General Error Message Alert */}
+            {errorMessage && (
+              <div className="mb-6 p-4 rounded-2xl bg-[#D90429]/10 border border-[#D90429]/30 text-[#D90429] text-xs sm:text-sm font-bold flex items-center space-x-2">
+                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{errorMessage}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* NSS Registration Number (Controlled by env var) */}
+                {showNssRegNo && (
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-xs font-black text-[#0B1B3D] uppercase tracking-wider ml-1">
+                      {t.form.nssRegNoLabel}
+                    </label>
+                    <input
+                      type="text"
+                      value={form.nssRegNo}
+                      onFocus={handleFieldInteraction}
+                      onChange={(e) => setForm({ ...form, nssRegNo: e.target.value })}
+                      placeholder={t.form.nssRegNoPlaceholder}
+                      className="w-full p-4 rounded-2xl bg-[#e6edf5] neu-input text-[#0B1B3D] placeholder:text-[#475569]/40 outline-none text-sm font-medium"
+                    />
+                  </div>
+                )}
+
+                {/* Name Of Volunteer */}
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-[#0B1B3D] uppercase tracking-wider ml-1">
+                    {t.form.nameLabel} <span className="text-[#D90429]">*</span>
+                  </label>
+                  <input
+                    required
+                    type="text"
+                    value={form.name}
+                    onFocus={handleFieldInteraction}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    placeholder={t.form.namePlaceholder}
+                    className="w-full p-4 rounded-2xl bg-[#e6edf5] neu-input text-[#0B1B3D] placeholder:text-[#475569]/40 outline-none text-sm font-medium"
+                  />
+                </div>
+
+                {/* Year Dropdown */}
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-[#0B1B3D] uppercase tracking-wider ml-1">
+                    {t.form.yearLabel} <span className="text-[#D90429]">*</span>
+                  </label>
+                  <select
+                    required
+                    value={form.year}
+                    onFocus={handleFieldInteraction}
+                    onChange={(e) => setForm({ ...form, year: e.target.value })}
+                    className="w-full p-4 rounded-2xl bg-[#e6edf5] neu-input text-[#0B1B3D] outline-none text-sm font-semibold cursor-pointer"
+                  >
+                    <option value="" disabled>{t.form.yearPlaceholder}</option>
+                    {t.options.years.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Category Dropdown */}
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-[#0B1B3D] uppercase tracking-wider ml-1">
+                    {t.form.categoryLabel} <span className="text-[#D90429]">*</span>
+                  </label>
+                  <select
+                    required
+                    value={form.category}
+                    onFocus={handleFieldInteraction}
+                    onChange={(e) => setForm({ ...form, category: e.target.value })}
+                    className="w-full p-4 rounded-2xl bg-[#e6edf5] neu-input text-[#0B1B3D] outline-none text-sm font-semibold cursor-pointer"
+                  >
+                    <option value="" disabled>{t.form.categoryPlaceholder}</option>
+                    {t.options.categories.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Branch Dropdown */}
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-[#0B1B3D] uppercase tracking-wider ml-1">
+                    {t.form.branchLabel} <span className="text-[#D90429]">*</span>
+                  </label>
+                  <select
+                    required
+                    value={form.branch}
+                    onFocus={handleFieldInteraction}
+                    onChange={(e) => setForm({ ...form, branch: e.target.value })}
+                    className="w-full p-4 rounded-2xl bg-[#e6edf5] neu-input text-[#0B1B3D] outline-none text-sm font-semibold cursor-pointer"
+                  >
+                    <option value="" disabled>{t.form.branchPlaceholder}</option>
+                    {t.options.branches.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Father's Name */}
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-[#0B1B3D] uppercase tracking-wider ml-1">
+                    {t.form.fatherNameLabel} <span className="text-[#D90429]">*</span>
+                  </label>
+                  <input
+                    required
+                    type="text"
+                    value={form.fatherName}
+                    onFocus={handleFieldInteraction}
+                    onChange={(e) => setForm({ ...form, fatherName: e.target.value })}
+                    placeholder={t.form.fatherNamePlaceholder}
+                    className="w-full p-4 rounded-2xl bg-[#e6edf5] neu-input text-[#0B1B3D] placeholder:text-[#475569]/40 outline-none text-sm font-medium"
+                  />
+                </div>
+
+                {/* DOB (Calendar Datepicker) */}
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-[#0B1B3D] uppercase tracking-wider ml-1">
+                    {t.form.dobLabel} <span className="text-[#D90429]">*</span>
+                  </label>
+                  <input
+                    required
+                    type="date"
+                    value={form.dob}
+                    onFocus={handleFieldInteraction}
+                    onChange={(e) => setForm({ ...form, dob: e.target.value })}
+                    className="w-full p-4 rounded-2xl bg-[#e6edf5] neu-input text-[#0B1B3D] outline-none text-sm font-medium"
+                  />
+                </div>
+
+                {/* Gender Dropdown */}
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-[#0B1B3D] uppercase tracking-wider ml-1">
+                    {t.form.genderLabel} <span className="text-[#D90429]">*</span>
+                  </label>
+                  <select
+                    required
+                    value={form.gender}
+                    onFocus={handleFieldInteraction}
+                    onChange={(e) => setForm({ ...form, gender: e.target.value })}
+                    className="w-full p-4 rounded-2xl bg-[#e6edf5] neu-input text-[#0B1B3D] outline-none text-sm font-semibold cursor-pointer"
+                  >
+                    <option value="" disabled>{t.form.genderPlaceholder}</option>
+                    {t.options.genders.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Contact Number (+91 visual prefix, 10 digit input) */}
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-[#0B1B3D] uppercase tracking-wider ml-1">
+                    {t.form.contactLabel} <span className="text-[#D90429]">*</span>
+                  </label>
+                  <div className="flex items-center rounded-2xl bg-[#e6edf5] neu-input overflow-hidden">
+                    <span className="px-4 py-4 text-sm font-black text-[#0B1B3D] border-r border-[#c2cfd6]/50 bg-[#c2cfd6]/20 select-none">
+                      +91
+                    </span>
+                    <input
+                      required
+                      type="tel"
+                      maxLength={10}
+                      value={form.contactNo}
+                      onFocus={handleFieldInteraction}
+                      onChange={(e) => {
+                        const digitsOnly = e.target.value.replace(/\D/g, '');
+                        setForm({ ...form, contactNo: digitsOnly });
+                      }}
+                      placeholder={t.form.contactPlaceholder}
+                      className="w-full p-4 bg-transparent text-[#0B1B3D] placeholder:text-[#475569]/40 outline-none text-sm font-medium"
+                    />
+                  </div>
+                  <p className="text-[11px] text-[#475569] font-medium ml-1">{t.form.contactNote}</p>
+                </div>
+
+                {/* Email Address (Gmail Only) */}
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-[#0B1B3D] uppercase tracking-wider ml-1">
+                    {t.form.emailLabel} <span className="text-[#D90429]">*</span>
+                  </label>
+                  <input
+                    required
+                    type="email"
+                    value={form.email}
+                    onFocus={handleFieldInteraction}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    placeholder={t.form.emailPlaceholder}
+                    className="w-full p-4 rounded-2xl bg-[#e6edf5] neu-input text-[#0B1B3D] placeholder:text-[#475569]/40 outline-none text-sm font-medium"
+                  />
+                  <p className="text-[11px] text-[#475569] font-medium ml-1">{t.form.emailNote}</p>
+                </div>
+
+                {/* Blood Group (Optional Dropdown) */}
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-[#0B1B3D] uppercase tracking-wider ml-1">
+                    {t.form.bloodGroupLabel}
+                  </label>
+                  <select
+                    value={form.bloodGroup}
+                    onFocus={handleFieldInteraction}
+                    onChange={(e) => setForm({ ...form, bloodGroup: e.target.value })}
+                    className="w-full p-4 rounded-2xl bg-[#e6edf5] neu-input text-[#0B1B3D] outline-none text-sm font-semibold cursor-pointer"
+                  >
+                    <option value="">{t.form.bloodGroupPlaceholder}</option>
+                    {t.options.bloodGroups.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Current Address */}
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-xs font-black text-[#0B1B3D] uppercase tracking-wider ml-1">
+                    {t.form.addressLabel} <span className="text-[#D90429]">*</span>
+                  </label>
+                  <textarea
+                    required
+                    rows={3}
+                    value={form.address}
+                    onFocus={handleFieldInteraction}
+                    onChange={(e) => setForm({ ...form, address: e.target.value })}
+                    placeholder={t.form.addressPlaceholder}
+                    className="w-full p-4 rounded-2xl bg-[#e6edf5] neu-input text-[#0B1B3D] placeholder:text-[#475569]/40 outline-none text-sm font-medium resize-y"
+                  />
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={status === 'submitting'}
+                className="w-full py-5 text-white font-black text-base sm:text-lg uppercase tracking-widest rounded-full neu-btn-primary cursor-pointer mt-4"
+              >
+                {status === 'submitting' ? t.form.submittingButton : t.form.submitButton}
+              </button>
+            </form>
+          </div>
+        )}
+      </main>
+
+      {/* Google Auth Intercept Popup */}
+      <GoogleAuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={handleGoogleSuccess}
+        t={t}
       />
-    </main>
+    </div>
   );
 }

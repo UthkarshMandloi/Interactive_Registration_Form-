@@ -1,26 +1,99 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --bg-neu: #e6edf5;
+  --shadow-dark: #c2cfd6;
+  --shadow-light: #ffffff;
+  
+  --nss-navy: #0B1B3D;
+  --nss-navy-light: #162B56;
+  --nss-red: #D90429;
+  --nss-red-dark: #A7001E;
+  --nss-gold: #FFB703;
+  --nss-gold-dark: #D49200;
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--bg-neu);
+  color: var(--text-primary);
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Custom dropdown options background styling */
+select option {
+  background-color: #ffffff;
+  color: #0B1B3D;
+  padding: 10px;
+}
+
+/* Neumorphic Flat Surface (Card) */
+.neu-card {
+  background: var(--bg-neu);
+  box-shadow: 14px 14px 28px #c5d0e0, -14px -14px 28px #ffffff;
+  border-radius: 32px;
+}
+
+/* Neumorphic Small Card / Button */
+.neu-badge {
+  background: var(--bg-neu);
+  box-shadow: 6px 6px 14px #c5d0e0, -6px -6px 14px #ffffff;
+  border-radius: 9999px;
+}
+
+/* Neumorphic Pressed / Inset Input */
+.neu-input {
+  background: var(--bg-neu);
+  box-shadow: inset 5px 5px 10px #c5d0e0, inset -5px -5px 10px #ffffff;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  transition: all 0.25s ease;
+}
+
+.neu-input:focus {
+  box-shadow: inset 7px 7px 14px #b8c4d6, inset -7px -7px 14px #ffffff;
+  border-color: var(--nss-navy);
+}
+
+/* Neumorphic Active Button */
+.neu-btn-primary {
+  background: linear-gradient(145deg, #0d214a, #091530);
+  color: #ffffff;
+  box-shadow: 8px 8px 18px #b8c4d6, -8px -8px 18px #ffffff;
+  border-radius: 9999px;
+  transition: all 0.2s ease;
+}
+
+.neu-btn-primary:hover {
+  box-shadow: 10px 10px 22px #b8c4d6, -10px -10px 22px #ffffff;
+  transform: translateY(-1px);
+}
+
+.neu-btn-primary:active {
+  box-shadow: inset 4px 4px 8px #050b1a, inset -4px -4px 8px #132b5e;
+  transform: translateY(1px);
+}
+
+/* Neumorphic Knob / Circle */
+.neu-knob {
+  background: linear-gradient(145deg, #ffffff, #dce4f0);
+  box-shadow: 3px 3px 6px #bac6d8, -3px -3px 6px #ffffff;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-neu);
+}
+::-webkit-scrollbar-thumb {
+  background: #c5d0e0;
+  border-radius: 9999px;
+  border: 2px solid var(--bg-neu);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--nss-navy);
 }

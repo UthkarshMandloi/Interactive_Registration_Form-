@@ -13,8 +13,16 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Yuva Mahotsav",
-  description: "Get your certificate for Yuva Mahotsav - Celebrating Ancient Indian Tradition",
+  title: "NSS IET DAVV - Volunteer Registration Form",
+  description: "Official National Service Scheme (NSS) Volunteer Registration Form for Institute of Engineering & Technology, DAVV Indore.",
+  icons: {
+    icon: [
+      { url: '/NSS_logo_Fav.png?v=2', type: 'image/png' },
+      { url: '/favicon.ico?v=2', type: 'image/x-icon' }
+    ],
+    shortcut: '/NSS_logo_Fav.png?v=2',
+    apple: '/NSS_logo_Fav.png?v=2',
+  },
 };
 
 export default function RootLayout({
@@ -24,8 +32,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/NSS_logo_Fav.png?v=2" type="image/png" sizes="any" />
+        <link rel="shortcut icon" href="/NSS_logo_Fav.png?v=2" />
+        <link rel="apple-touch-icon" href="/NSS_logo_Fav.png?v=2" />
+      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-[#e6edf5] text-[#0B1B3D] selection:bg-[#0B1B3D] selection:text-white`}
       >
         {children}
       </body>
