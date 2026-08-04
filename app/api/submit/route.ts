@@ -1,4 +1,3 @@
-import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { JWT } from 'google-auth-library';
 import { NextResponse } from 'next/server';
 
@@ -23,6 +22,19 @@ const HEADERS = [
   'Blood Group',
   'Current Address',
 ];
+
+async function getAccessToken() {
+  if (!GOOGLE_CLIENT_EMAIL || !GOOGLE_PRIVATE_KEY) {
+    throw new Error("Missing Google Service Account credentials");
+  }
+  const client = new JWT({
+    email: GOOGLE_CLIENT_EMAIL,
+    key: GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+  });
+  const res = await client.getAccessToken();
+  return res.token;
+}
 
 export async function POST(req: Request) {
   try {
@@ -74,41 +86,42 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, devMode: true });
     }
 
-    const serviceAccountAuth = new JWT({
-      email: GOOGLE_CLIENT_EMAIL,
-      key: GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    const accessToken = await getAccessToken();
+
+    // 1. Fetch current sheet values (Columns A to O)
+    const readUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/A:O`;
+    const readRes = await fetch(readUrl, {
+      headers: { Authorization: `Bearer ${accessToken}` },
     });
+    const readData = await readRes.json();
 
-    const doc = new GoogleSpreadsheet(SPREADSHEET_ID, serviceAccountAuth);
-    await doc.loadInfo();
+    let values: any[][] = readData.values || [];
 
-    // Select the main submissions sheet (EXCLUDING the 'Drafts' sheet)
-    let sheet = doc.sheetsByIndex.find(s => s.title !== 'Drafts');
-    if (!sheet) {
-      sheet = doc.sheetsByIndex[0];
+    // 2. If sheet is completely empty, initialize Row 1 with headers
+    if (values.length === 0) {
+      const initUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/A1:O1?valueInputOption=USER_ENTERED`;
+      await fetch(initUrl, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          range: 'A1:O1',
+          majorDimension: 'ROWS',
+          values: [HEADERS],
+        }),
+      });
+      values = [HEADERS];
     }
 
-    // Safely load or initialize header row & existing rows
-    let existingRows: any[] = [];
-    try {
-      await sheet.loadHeaderRow();
-      if (!sheet.headerValues || sheet.headerValues.length === 0) {
-        await sheet.setHeaderRow(HEADERS);
-        existingRows = [];
-      } else {
-        existingRows = await sheet.getRows();
-      }
-    } catch (e: any) {
-      await sheet.setHeaderRow(HEADERS);
-      existingRows = [];
-    }
-
-    // Check duplicate by Google Email or form Email in the MAIN submissions sheet
+    // 3. Check for duplicate email in existing submissions (Rows index 1 onwards)
     const targetGoogleEmail = (googleEmail || email).toLowerCase().trim();
-    const isDuplicate = existingRows.some(row => {
-      const gEmail = row.get('Google Email')?.toString().trim().toLowerCase();
-      const fEmail = row.get('Email Address')?.toString().trim().toLowerCase();
+    const existingSubmissions = values.slice(1); // Exclude header row
+
+    const isDuplicate = existingSubmissions.some((row) => {
+      const gEmail = row[2]?.toString().trim().toLowerCase(); // Column C: Google Email
+      const fEmail = row[12]?.toString().trim().toLowerCase(); // Column M: Email Address
       return gEmail === targetGoogleEmail || fEmail === targetGoogleEmail;
     });
 
@@ -119,7 +132,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const serialNo = existingRows.length + 1;
+    // Serial number = Total existing rows (Header is row 1, so length = serial number for next row)
+    const serialNo = values.length;
 
     // Generate IST Timestamp
     const istTimestamp = new Date().toLocaleString("en-IN", {
@@ -128,24 +142,42 @@ export async function POST(req: Request) {
       timeStyle: "medium",
     });
 
-    // Append new row with all fields to the main submission sheet
-    await sheet.addRow({
-      'S.no.': serialNo,
-      'Timestamp': istTimestamp,
-      'Google Email': googleEmail || email,
-      'NSS Reg.  No.': nssRegNo || 'N/A',
-      'Name Of Volunteer': name.trim(),
-      'Year': year,
-      'Category': category,
-      'Branch': branch,
-      "Father's Name": fatherName.trim(),
-      'DOB': dob,
-      'Gender': gender,
-      'Contact Number': cleanPhone,
-      'Email Address': email.trim(),
-      'Blood Group': bloodGroup || 'N/A',
-      'Current Address': address.trim(),
+    const newRow = [
+      serialNo,
+      istTimestamp,
+      googleEmail || email,
+      nssRegNo || 'N/A',
+      name.trim(),
+      year,
+      category,
+      branch,
+      fatherName.trim(),
+      dob,
+      gender,
+      cleanPhone,
+      email.trim(),
+      bloodGroup || 'N/A',
+      address.trim(),
+    ];
+
+    // 4. Native Google Sheets API v4 Append Call (Guarantees appending to the next empty row below existing data)
+    const appendUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/A1:O1:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
+    const appendRes = await fetch(appendUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        majorDimension: 'ROWS',
+        values: [newRow],
+      }),
     });
+
+    if (!appendRes.ok) {
+      const errText = await appendRes.text();
+      throw new Error(`Google Sheets Append failed: ${errText}`);
+    }
 
     return NextResponse.json({ success: true, sno: serialNo });
   } catch (error: any) {

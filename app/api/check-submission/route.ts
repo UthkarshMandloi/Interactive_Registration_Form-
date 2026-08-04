@@ -1,4 +1,3 @@
-import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { JWT } from 'google-auth-library';
 import { NextResponse } from 'next/server';
 
@@ -6,23 +5,18 @@ const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
 const GOOGLE_CLIENT_EMAIL = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
 const GOOGLE_PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY;
 
-const HEADERS = [
-  'S.no.',
-  'Timestamp',
-  'Google Email',
-  'NSS Reg.  No.',
-  'Name Of Volunteer',
-  'Year',
-  'Category',
-  'Branch',
-  "Father's Name",
-  'DOB',
-  'Gender',
-  'Contact Number',
-  'Email Address',
-  'Blood Group',
-  'Current Address',
-];
+async function getAccessToken() {
+  if (!GOOGLE_CLIENT_EMAIL || !GOOGLE_PRIVATE_KEY) {
+    throw new Error("Missing Google Service Account credentials");
+  }
+  const client = new JWT({
+    email: GOOGLE_CLIENT_EMAIL,
+    key: GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+  });
+  const res = await client.getAccessToken();
+  return res.token;
+}
 
 export async function GET(req: Request) {
   try {
@@ -37,46 +31,33 @@ export async function GET(req: Request) {
       return NextResponse.json({ submitted: false, configured: false });
     }
 
-    const serviceAccountAuth = new JWT({
-      email: GOOGLE_CLIENT_EMAIL,
-      key: GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    const accessToken = await getAccessToken();
+
+    // Fetch values from main sheet (A to O)
+    const readUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/A:O`;
+    const readRes = await fetch(readUrl, {
+      headers: { Authorization: `Bearer ${accessToken}` },
     });
 
-    const doc = new GoogleSpreadsheet(SPREADSHEET_ID, serviceAccountAuth);
-    await doc.loadInfo();
-
-    // Select the main submissions sheet (EXCLUDING the 'Drafts' sheet)
-    let sheet = doc.sheetsByIndex.find(s => s.title !== 'Drafts');
-    if (!sheet) {
-      sheet = doc.sheetsByIndex[0];
-    }
-
-    // Safety check: Ensure we are NOT reading from the Drafts tab
-    if (sheet.title === 'Drafts') {
+    if (!readRes.ok) {
       return NextResponse.json({ submitted: false, configured: true });
     }
 
-    let rows: any[] = [];
-    try {
-      await sheet.loadHeaderRow();
-      if (!sheet.headerValues || sheet.headerValues.length === 0) {
-        await sheet.setHeaderRow(HEADERS);
-        rows = [];
-      } else {
-        rows = await sheet.getRows();
-      }
-    } catch (e) {
-      rows = [];
+    const readData = await readRes.json();
+    const values: any[][] = readData.values || [];
+
+    if (values.length <= 1) {
+      // Only header or empty
+      return NextResponse.json({ submitted: false, configured: true });
     }
 
     const normalizedTarget = email.trim().toLowerCase();
+    const submissions = values.slice(1);
 
-    // Check if any existing row matches the user's email in the MAIN SUBMISSIONS sheet
-    const existing = rows.find(row => {
-      const gEmail = row.get('Google Email')?.toString().trim().toLowerCase();
-      const formEmail = row.get('Email Address')?.toString().trim().toLowerCase();
-      return gEmail === normalizedTarget || formEmail === normalizedTarget;
+    const existing = submissions.find((row) => {
+      const gEmail = row[2]?.toString().trim().toLowerCase();  // Column C: Google Email
+      const fEmail = row[12]?.toString().trim().toLowerCase(); // Column M: Email Address
+      return gEmail === normalizedTarget || fEmail === normalizedTarget;
     });
 
     return NextResponse.json({ 

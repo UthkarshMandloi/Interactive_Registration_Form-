@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { TranslationSchema } from '@/lib/translations';
 
 interface NssLogoLoaderProps {
-  t: TranslationSchema;
+  t?: TranslationSchema;
   message?: string;
 }
 
@@ -27,8 +27,8 @@ export default function NssLogoLoader({ t, message }: NssLogoLoaderProps) {
           />
         </div>
 
-        {/* Layer 2: Separated Inner Red Konark Rath Wheel - ROTATING (Slightly smaller for perfect alignment) */}
-        <div className="absolute inset-0 p-[20%] pointer-events-none animate-spin-slow drop-shadow-[0_4px_15px_rgba(217,4,41,0.3)]">
+        {/* Layer 2: Separated Inner Red Konark Rath Wheel - ROTATING (Centered, sized at 56%, offset down 3px) */}
+        <div className="absolute w-[56%] h-[56%] translate-y-[3px] pointer-events-none animate-spin-slow drop-shadow-[0_4px_15px_rgba(217,4,41,0.3)] flex items-center justify-center">
           <Image
             src="/nss_red_wheel.png"
             alt="NSS Inner Red Konark Rath Wheel"
@@ -44,7 +44,7 @@ export default function NssLogoLoader({ t, message }: NssLogoLoaderProps) {
         NSS IET DAVV
       </h3>
       <p className="text-xs sm:text-sm font-bold text-[#D90429] mb-4">
-        {message || (t.header.orgTitle === 'NATIONAL SERVICE SCHEME (NSS)' ? 'Verifying registration status...' : 'पंजीकरण स्थिति की जाँच की जा रही है...')}
+        {message || (t?.header?.orgTitle === 'NATIONAL SERVICE SCHEME (NSS)' ? 'Verifying registration status...' : 'पंजीकरण स्थिति की जाँच की जा रही है...')}
       </p>
 
       {/* Shimmering Loading Dots */}
