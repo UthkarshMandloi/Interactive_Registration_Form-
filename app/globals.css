@@ -22,11 +22,15 @@ body {
   overflow-x: hidden;
 }
 
-/* Custom dropdown options background styling */
-select option {
-  background-color: #ffffff;
-  color: #0B1B3D;
-  padding: 10px;
+/* Custom Datepicker Indicator styling */
+input[type="date"] {
+  color-scheme: light;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(12%) sepia(50%) saturate(3000%) hue-rotate(200deg) brightness(90%) contrast(100%);
+  padding: 4px;
 }
 
 /* Neumorphic Flat Surface (Card) */
@@ -52,7 +56,7 @@ select option {
   transition: all 0.25s ease;
 }
 
-.neu-input:focus {
+.neu-input:focus, .neu-input:focus-within {
   box-shadow: inset 7px 7px 14px #b8c4d6, inset -7px -7px 14px #ffffff;
   border-color: var(--nss-navy);
 }

@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import GoogleAuthModal from '@/components/GoogleAuthModal';
 import NssLogoLoader from '@/components/NssLogoLoader';
+import CustomSelect from '@/components/CustomSelect';
 import { translations, Language } from '@/lib/translations';
 
 interface UserSession {
@@ -372,18 +373,14 @@ export default function RegistrationPage() {
                   <label className="text-xs font-black text-[#0B1B3D] uppercase tracking-wider ml-1">
                     {t.form.yearLabel} <span className="text-[#D90429]">*</span>
                   </label>
-                  <select
+                  <CustomSelect
                     required
                     value={form.year}
+                    onChange={(val) => setForm({ ...form, year: val })}
+                    options={t.options.years}
+                    placeholder={t.form.yearPlaceholder}
                     onFocus={handleFieldInteraction}
-                    onChange={(e) => setForm({ ...form, year: e.target.value })}
-                    className="w-full p-4 rounded-2xl bg-[#e6edf5] neu-input text-[#0B1B3D] outline-none text-sm font-semibold cursor-pointer"
-                  >
-                    <option value="" disabled>{t.form.yearPlaceholder}</option>
-                    {t.options.years.map((opt) => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
+                  />
                 </div>
 
                 {/* Category Dropdown */}
@@ -391,18 +388,14 @@ export default function RegistrationPage() {
                   <label className="text-xs font-black text-[#0B1B3D] uppercase tracking-wider ml-1">
                     {t.form.categoryLabel} <span className="text-[#D90429]">*</span>
                   </label>
-                  <select
+                  <CustomSelect
                     required
                     value={form.category}
+                    onChange={(val) => setForm({ ...form, category: val })}
+                    options={t.options.categories}
+                    placeholder={t.form.categoryPlaceholder}
                     onFocus={handleFieldInteraction}
-                    onChange={(e) => setForm({ ...form, category: e.target.value })}
-                    className="w-full p-4 rounded-2xl bg-[#e6edf5] neu-input text-[#0B1B3D] outline-none text-sm font-semibold cursor-pointer"
-                  >
-                    <option value="" disabled>{t.form.categoryPlaceholder}</option>
-                    {t.options.categories.map((opt) => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
+                  />
                 </div>
 
                 {/* Branch Dropdown */}
@@ -410,18 +403,14 @@ export default function RegistrationPage() {
                   <label className="text-xs font-black text-[#0B1B3D] uppercase tracking-wider ml-1">
                     {t.form.branchLabel} <span className="text-[#D90429]">*</span>
                   </label>
-                  <select
+                  <CustomSelect
                     required
                     value={form.branch}
+                    onChange={(val) => setForm({ ...form, branch: val })}
+                    options={t.options.branches}
+                    placeholder={t.form.branchPlaceholder}
                     onFocus={handleFieldInteraction}
-                    onChange={(e) => setForm({ ...form, branch: e.target.value })}
-                    className="w-full p-4 rounded-2xl bg-[#e6edf5] neu-input text-[#0B1B3D] outline-none text-sm font-semibold cursor-pointer"
-                  >
-                    <option value="" disabled>{t.form.branchPlaceholder}</option>
-                    {t.options.branches.map((opt) => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
+                  />
                 </div>
 
                 {/* Father's Name */}
@@ -440,7 +429,7 @@ export default function RegistrationPage() {
                   />
                 </div>
 
-                {/* DOB (Calendar Datepicker) */}
+                {/* DOB (Clean Neumorphic Datepicker) */}
                 <div className="space-y-2">
                   <label className="text-xs font-black text-[#0B1B3D] uppercase tracking-wider ml-1">
                     {t.form.dobLabel} <span className="text-[#D90429]">*</span>
@@ -451,7 +440,7 @@ export default function RegistrationPage() {
                     value={form.dob}
                     onFocus={handleFieldInteraction}
                     onChange={(e) => setForm({ ...form, dob: e.target.value })}
-                    className="w-full p-4 rounded-2xl bg-[#e6edf5] neu-input text-[#0B1B3D] outline-none text-sm font-medium"
+                    className="w-full p-4 rounded-2xl bg-[#e6edf5] neu-input text-[#0B1B3D] outline-none text-sm font-semibold cursor-pointer"
                   />
                 </div>
 
@@ -460,18 +449,14 @@ export default function RegistrationPage() {
                   <label className="text-xs font-black text-[#0B1B3D] uppercase tracking-wider ml-1">
                     {t.form.genderLabel} <span className="text-[#D90429]">*</span>
                   </label>
-                  <select
+                  <CustomSelect
                     required
                     value={form.gender}
+                    onChange={(val) => setForm({ ...form, gender: val })}
+                    options={t.options.genders}
+                    placeholder={t.form.genderPlaceholder}
                     onFocus={handleFieldInteraction}
-                    onChange={(e) => setForm({ ...form, gender: e.target.value })}
-                    className="w-full p-4 rounded-2xl bg-[#e6edf5] neu-input text-[#0B1B3D] outline-none text-sm font-semibold cursor-pointer"
-                  >
-                    <option value="" disabled>{t.form.genderPlaceholder}</option>
-                    {t.options.genders.map((opt) => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
+                  />
                 </div>
 
                 {/* Contact Number (+91 visual prefix, 10 digit input) */}
@@ -522,17 +507,13 @@ export default function RegistrationPage() {
                   <label className="text-xs font-black text-[#0B1B3D] uppercase tracking-wider ml-1">
                     {t.form.bloodGroupLabel}
                   </label>
-                  <select
+                  <CustomSelect
                     value={form.bloodGroup}
+                    onChange={(val) => setForm({ ...form, bloodGroup: val })}
+                    options={t.options.bloodGroups}
+                    placeholder={t.form.bloodGroupPlaceholder}
                     onFocus={handleFieldInteraction}
-                    onChange={(e) => setForm({ ...form, bloodGroup: e.target.value })}
-                    className="w-full p-4 rounded-2xl bg-[#e6edf5] neu-input text-[#0B1B3D] outline-none text-sm font-semibold cursor-pointer"
-                  >
-                    <option value="">{t.form.bloodGroupPlaceholder}</option>
-                    {t.options.bloodGroups.map((opt) => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
+                  />
                 </div>
 
                 {/* Current Address */}
