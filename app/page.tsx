@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import GoogleAuthModal from '@/components/GoogleAuthModal';
 import { translations, Language } from '@/lib/translations';
 
@@ -40,7 +41,7 @@ export default function RegistrationPage() {
   const t = translations[lang];
   const autosaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Auto check session from localStorage on mount
+  // Auto check session from localStorage on mount & auto-prompt Google login on phone/Chrome
   useEffect(() => {
     const savedUser = localStorage.getItem('nss_user_session');
     if (savedUser) {
@@ -51,6 +52,9 @@ export default function RegistrationPage() {
       } catch (e) {
         localStorage.removeItem('nss_user_session');
       }
+    } else {
+      // Auto open modal on load for seamless Chrome/Phone login
+      setIsAuthModalOpen(true);
     }
   }, []);
 
@@ -65,15 +69,12 @@ export default function RegistrationPage() {
   useEffect(() => {
     if (!user?.email || status === 'success' || status === 'already_submitted') return;
 
-    // Check if form has any user entered data
     const hasData = Object.entries(form).some(([key, val]) => key !== 'email' && Boolean(val.trim()));
     if (!hasData) return;
 
-    // Save to LocalStorage immediately
     localStorage.setItem(`nss_draft_${user.email}`, JSON.stringify(form));
     setDraftSaved(true);
 
-    // Debounce cloud draft save to Google Sheet (1.5s delay)
     if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     autosaveTimerRef.current = setTimeout(() => {
       fetch('/api/draft', {
@@ -91,7 +92,6 @@ export default function RegistrationPage() {
   const checkSubmissionStatusAndLoadDraft = async (email: string) => {
     setStatus('checking');
     try {
-      // 1. Check if user already submitted
       const res = await fetch(`/api/check-submission?email=${encodeURIComponent(email)}`);
       const data = await res.json();
 
@@ -102,7 +102,6 @@ export default function RegistrationPage() {
 
       setStatus('idle');
 
-      // 2. Load draft from localStorage first (fast)
       const localDraft = localStorage.getItem(`nss_draft_${email}`);
       if (localDraft) {
         try {
@@ -111,14 +110,13 @@ export default function RegistrationPage() {
         } catch (e) {}
       }
 
-      // 3. Fetch saved draft from Cloud Google Sheet (for cross-device persistence)
       const draftRes = await fetch(`/api/draft?email=${encodeURIComponent(email)}`);
       const draftData = await draftRes.json();
       if (draftData.draft) {
         setForm((prev) => ({
           ...prev,
           ...draftData.draft,
-          email, // Lock to current Google Email
+          email,
         }));
         localStorage.setItem(`nss_draft_${email}`, JSON.stringify(draftData.draft));
       }
@@ -145,28 +143,8 @@ export default function RegistrationPage() {
     checkSubmissionStatusAndLoadDraft(userData.email);
   };
 
-  const handleLogout = () => {
-    if (user?.email) {
-      localStorage.removeItem(`nss_draft_${user.email}`);
-    }
-    setUser(null);
-    localStorage.removeItem('nss_user_session');
-    setStatus('idle');
-    setDraftSaved(false);
-    setForm({
-      nssRegNo: '',
-      name: '',
-      year: '',
-      category: '',
-      branch: '',
-      fatherName: '',
-      dob: '',
-      gender: '',
-      contactNo: '',
-      email: '',
-      bloodGroup: '',
-      address: '',
-    });
+  const handleSwitchAccount = () => {
+    setIsAuthModalOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -216,7 +194,6 @@ export default function RegistrationPage() {
 
       if (res.ok && data.success) {
         setStatus('success');
-        // Clear drafts on successful submission
         localStorage.removeItem(`nss_draft_${user.email}`);
         fetch(`/api/draft?email=${encodeURIComponent(user.email)}`, { method: 'DELETE' }).catch(() => {});
       } else if (res.status === 409 || data.error === 'ALREADY_SUBMITTED') {
@@ -235,13 +212,13 @@ export default function RegistrationPage() {
   return (
     <div className="min-h-screen flex flex-col bg-[#e6edf5] text-[#0B1B3D] selection:bg-[#0B1B3D] selection:text-white">
       
-      {/* Top Header with Neumorphic Capsule Language Switcher */}
+      {/* Top Header */}
       <Header
         lang={lang}
         onToggleLang={handleToggleLang}
         t={t}
         user={user}
-        onLogout={handleLogout}
+        onSwitchAccount={handleSwitchAccount}
       />
 
       <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-6 sm:px-8 sm:py-10 flex flex-col justify-center">
@@ -289,11 +266,11 @@ export default function RegistrationPage() {
             </div>
           </div>
         ) : status === 'already_submitted' ? (
-          /* Status Screen: Already Submitted */
+          /* Status Screen: Already Submitted (With same green checkmark tick) */
           <div className="bg-[#e6edf5] rounded-3xl p-6 sm:p-12 text-center neu-card shadow-[16px_16px_36px_#c2cfd6,-16px_-16px_36px_#ffffff] border border-white/80">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-amber-500/10 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-6 neu-knob">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-500/10 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 neu-knob">
               <svg className="w-8 h-8 sm:w-10 sm:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
               </svg>
             </div>
             <h3 className="text-2xl sm:text-3xl font-black text-[#0B1B3D] mb-3">
@@ -303,17 +280,16 @@ export default function RegistrationPage() {
               {t.status.alreadySubmittedMsg}
             </p>
             <button
-              onClick={handleLogout}
-              className="px-6 py-3 rounded-full bg-[#0B1B3D] text-white text-xs uppercase tracking-widest font-black transition neu-btn-primary"
+              onClick={handleSwitchAccount}
+              className="px-6 py-3 rounded-full bg-[#0B1B3D] text-white text-xs uppercase tracking-widest font-black transition neu-btn-primary cursor-pointer"
             >
-              {t.status.submitAnother}
+              {t.status.switchAccountBtn}
             </button>
           </div>
         ) : (
           /* Main Neumorphic Registration Form Card */
           <div className="bg-[#e6edf5] p-6 sm:p-10 rounded-3xl neu-card shadow-[18px_18px_40px_#beccd9,-18px_-18px_40px_#ffffff] border border-white/80 relative">
             
-            {/* Login Prompt Banner if Not Logged In */}
             {!user ? (
               <div 
                 onClick={() => setIsAuthModalOpen(true)}
@@ -330,7 +306,6 @@ export default function RegistrationPage() {
                 </span>
               </div>
             ) : draftSaved ? (
-              /* Autosave Confirmation Badge */
               <div className="mb-6 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 text-xs font-bold flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -354,7 +329,7 @@ export default function RegistrationPage() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 
-                {/* NSS Registration Number (Controlled by env var) */}
+                {/* NSS Registration Number */}
                 {showNssRegNo && (
                   <div className="space-y-2 md:col-span-2">
                     <label className="text-xs font-black text-[#0B1B3D] uppercase tracking-wider ml-1">
@@ -584,6 +559,9 @@ export default function RegistrationPage() {
           </div>
         )}
       </main>
+
+      {/* Footer */}
+      <Footer t={t} />
 
       {/* Google Auth Intercept Popup */}
       <GoogleAuthModal
