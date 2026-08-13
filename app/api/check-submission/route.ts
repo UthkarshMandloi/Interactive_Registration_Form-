@@ -33,8 +33,8 @@ export async function GET(req: Request) {
 
     const accessToken = await getAccessToken();
 
-    // Fetch values from main sheet (A to O)
-    const readUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/A:O`;
+    // Fetch values from main sheet (A to Z)
+    const readUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/A:Z`;
     const readRes = await fetch(readUrl, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -51,12 +51,26 @@ export async function GET(req: Request) {
       return NextResponse.json({ submitted: false, configured: true });
     }
 
+    const headers = values[0] || [];
+    function normalizeHeader(header: string): string {
+      return header.toLowerCase().replace(/[^a-z0-9]/g, '');
+    }
+
+    let googleEmailColIdx = headers.findIndex((h: any) => normalizeHeader(String(h)) === 'googleemail');
+    let emailAddressColIdx = headers.findIndex((h: any) => {
+      const norm = normalizeHeader(String(h));
+      return norm === 'emailaddress' || norm === 'email';
+    });
+
+    if (googleEmailColIdx === -1) googleEmailColIdx = 2; // Column C fallback
+    if (emailAddressColIdx === -1) emailAddressColIdx = 13; // Column M fallback
+
     const normalizedTarget = email.trim().toLowerCase();
     const submissions = values.slice(1);
 
     const existing = submissions.find((row) => {
-      const gEmail = row[2]?.toString().trim().toLowerCase();  // Column C: Google Email
-      const fEmail = row[12]?.toString().trim().toLowerCase(); // Column M: Email Address
+      const gEmail = row[googleEmailColIdx]?.toString().trim().toLowerCase();
+      const fEmail = row[emailAddressColIdx]?.toString().trim().toLowerCase();
       return gEmail === normalizedTarget || fEmail === normalizedTarget;
     });
 

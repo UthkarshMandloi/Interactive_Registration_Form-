@@ -338,9 +338,30 @@ export default function RegistrationPage() {
                 {/* NSS Registration Number */}
                 {showNssRegNo && (
                   <div className="space-y-2 md:col-span-2">
-                    <label className="text-xs font-black text-[#0B1B3D] uppercase tracking-wider ml-1">
-                      {t.form.nssRegNoLabel}
-                    </label>
+                    <div className="flex items-center space-x-2">
+                      <label className="text-xs font-black text-[#0B1B3D] uppercase tracking-wider ml-1">
+                        {t.form.nssRegNoLabel}
+                      </label>
+                      <span className="text-[10px] font-bold text-[#475569] bg-[#c2cfd6]/40 px-2 py-0.5 rounded-full select-none">
+                        {t.form.nssRegNoBadge}
+                      </span>
+                      <div className="relative group inline-flex items-center">
+                        <button
+                          type="button"
+                          aria-label="NSS Reg No Info"
+                          className="w-5 h-5 rounded-full bg-[#e6edf5] neu-knob flex items-center justify-center text-[#0B1B3D] hover:text-[#D90429] transition text-xs font-bold focus:outline-none"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </button>
+                        {/* Tooltip Popup on Hover */}
+                        <div className="absolute left-0 sm:left-1/2 sm:-translate-x-1/2 bottom-full mb-2 hidden group-hover:block group-focus-within:block w-64 p-3 bg-[#0B1B3D] text-white text-[11px] font-medium rounded-xl shadow-xl z-30 text-center leading-relaxed">
+                          {t.form.nssRegNoTooltip}
+                          <div className="absolute top-full left-4 sm:left-1/2 sm:-translate-x-1/2 border-4 border-transparent border-t-[#0B1B3D]" />
+                        </div>
+                      </div>
+                    </div>
                     <input
                       type="text"
                       value={form.nssRegNo}

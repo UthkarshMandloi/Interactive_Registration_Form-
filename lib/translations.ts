@@ -20,6 +20,8 @@ export interface TranslationSchema {
   form: {
     nssRegNoLabel: string;
     nssRegNoPlaceholder: string;
+    nssRegNoBadge: string;
+    nssRegNoTooltip: string;
     nameLabel: string;
     namePlaceholder: string;
     yearLabel: string;
@@ -94,6 +96,8 @@ export const translations: Record<Language, TranslationSchema> = {
     form: {
       nssRegNoLabel: 'NSS Reg. No.',
       nssRegNoPlaceholder: 'Enter your NSS Registration Number',
+      nssRegNoBadge: '(if you have)',
+      nssRegNoTooltip: 'If you have an existing NSS Registration Number, please mention it here. Otherwise, you can leave it blank.',
       nameLabel: 'Name Of Volunteer',
       namePlaceholder: 'Full Name (as per official record)',
       yearLabel: 'Year',
@@ -200,6 +204,8 @@ export const translations: Record<Language, TranslationSchema> = {
     form: {
       nssRegNoLabel: 'एन.एस.एस. पंजीकरण संख्या',
       nssRegNoPlaceholder: 'अपनी एन.एस.एस. पंजीकरण संख्या दर्ज करें',
+      nssRegNoBadge: '(यदि आपके पास है)',
+      nssRegNoTooltip: 'यदि आपके पास पुरानी एन.एस.एस. पंजीकरण संख्या है तो दर्ज करें, अन्यथा इसे खाली छोड़ सकते हैं।',
       nameLabel: 'स्वयंसेवक का नाम',
       namePlaceholder: 'पूरा नाम (आधिकारिक रिकॉर्ड के अनुसार)',
       yearLabel: 'वर्ष',
