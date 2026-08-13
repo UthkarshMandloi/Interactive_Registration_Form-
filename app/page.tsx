@@ -419,18 +419,19 @@ export default function RegistrationPage() {
                   />
                 </div>
 
-                {/* Branch Dropdown */}
+                {/* Branch Input */}
                 <div className="space-y-2">
                   <label className="text-xs font-black text-[#0B1B3D] uppercase tracking-wider ml-1">
                     {t.form.branchLabel} <span className="text-[#D90429]">*</span>
                   </label>
-                  <CustomSelect
+                  <input
                     required
+                    type="text"
                     value={form.branch}
-                    onChange={(val) => setForm({ ...form, branch: val })}
-                    options={t.options.branches}
-                    placeholder={t.form.branchPlaceholder}
                     onFocus={handleFieldInteraction}
+                    onChange={(e) => setForm({ ...form, branch: e.target.value })}
+                    placeholder={t.form.branchPlaceholder}
+                    className="w-full p-4 rounded-2xl bg-[#e6edf5] neu-input text-[#0B1B3D] placeholder:text-[#475569]/40 outline-none text-sm font-medium"
                   />
                 </div>
 
