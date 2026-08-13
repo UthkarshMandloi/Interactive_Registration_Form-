@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import GoogleAuthModal from '@/components/GoogleAuthModal';
 import NssLogoLoader from '@/components/NssLogoLoader';
 import CustomSelect from '@/components/CustomSelect';
+import ApplicationFormModal, { ApplicationFormData } from '@/components/ApplicationFormModal';
 import { translations, Language } from '@/lib/translations';
 
 interface UserSession {
@@ -22,6 +23,8 @@ export default function RegistrationPage() {
   const [status, setStatus] = useState<'idle' | 'checking' | 'submitting' | 'success' | 'already_submitted'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [draftSaved, setDraftSaved] = useState(false);
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [submittedData, setSubmittedData] = useState<ApplicationFormData | null>(null);
 
   const showNssRegNo = process.env.NEXT_PUBLIC_SHOW_NSS_REG_NO === 'true';
 
@@ -98,6 +101,9 @@ export default function RegistrationPage() {
 
       if (data.submitted) {
         setStatus('already_submitted');
+        if (data.submission) {
+          setSubmittedData(data.submission);
+        }
         return;
       }
 
@@ -197,6 +203,7 @@ export default function RegistrationPage() {
 
       if (res.ok && data.success) {
         setStatus('success');
+        setSubmittedData({ ...form });
         localStorage.removeItem(`nss_draft_${user.email}`);
         fetch(`/api/draft?email=${encodeURIComponent(user.email)}`, { method: 'DELETE' }).catch(() => {});
       } else if (res.status === 409 || data.error === 'ALREADY_SUBMITTED') {
@@ -264,9 +271,18 @@ export default function RegistrationPage() {
             <h3 className="text-2xl sm:text-3xl font-black text-[#0B1B3D] mb-3">
               {t.status.successTitle}
             </h3>
-            <p className="text-sm sm:text-lg text-[#475569] max-w-lg mx-auto leading-relaxed mb-8 font-medium">
+            <p className="text-sm sm:text-lg text-[#475569] max-w-lg mx-auto leading-relaxed mb-6 font-medium">
               {t.status.successMsg}
             </p>
+            <button
+              onClick={() => setIsFormModalOpen(true)}
+              className="px-6 py-3.5 rounded-full bg-[#D90429] text-white text-xs uppercase tracking-widest font-black transition neu-btn-primary cursor-pointer shadow-lg hover:scale-105 mb-6 flex items-center justify-center space-x-2 mx-auto"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              <span>{t.status.downloadFormBtn}</span>
+            </button>
             <div className="p-4 rounded-2xl bg-[#e6edf5] neu-input text-xs font-bold text-[#0B1B3D] max-w-xs mx-auto">
               NSS (National Service Scheme), IET DAVV
             </div>
@@ -285,12 +301,23 @@ export default function RegistrationPage() {
             <p className="text-sm sm:text-base text-[#475569] max-w-lg mx-auto leading-relaxed mb-8 font-medium">
               {t.status.alreadySubmittedMsg}
             </p>
-            <button
-              onClick={handleSwitchAccount}
-              className="px-6 py-3 rounded-full bg-[#0B1B3D] text-white text-xs uppercase tracking-widest font-black transition neu-btn-primary cursor-pointer"
-            >
-              {t.status.switchAccountBtn}
-            </button>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <button
+                onClick={() => setIsFormModalOpen(true)}
+                className="px-6 py-3.5 rounded-full bg-[#D90429] text-white text-xs uppercase tracking-widest font-black transition neu-btn-primary cursor-pointer shadow-lg hover:scale-105 flex items-center justify-center space-x-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span>{t.status.downloadFormBtn}</span>
+              </button>
+              <button
+                onClick={handleSwitchAccount}
+                className="px-6 py-3.5 rounded-full bg-[#0B1B3D] text-white text-xs uppercase tracking-widest font-black transition neu-btn-primary cursor-pointer"
+              >
+                {t.status.switchAccountBtn}
+              </button>
+            </div>
           </div>
         ) : (
           /* Main Neumorphic Registration Form Card */
@@ -584,6 +611,13 @@ export default function RegistrationPage() {
         onClose={() => setIsAuthModalOpen(false)}
         onSuccess={handleGoogleSuccess}
         t={t}
+      />
+
+      {/* DAVV NSS Application Form Printable Modal */}
+      <ApplicationFormModal
+        isOpen={isFormModalOpen}
+        onClose={() => setIsFormModalOpen(false)}
+        data={submittedData || form}
       />
     </div>
   );

@@ -67,6 +67,8 @@ export interface TranslationSchema {
     errorRequired: string;
     errorGeneral: string;
     switchAccountBtn: string;
+    downloadFormBtn: string;
+    viewFormBtn: string;
   };
   footer: {
     copyright: string;
@@ -179,6 +181,8 @@ export const translations: Record<Language, TranslationSchema> = {
       errorRequired: 'Please fill in all mandatory fields correctly.',
       errorGeneral: 'An error occurred while submitting your registration. Please try again.',
       switchAccountBtn: 'Switch Google Account',
+      downloadFormBtn: 'Download / Print Application Form',
+      viewFormBtn: 'View Application Form',
     },
     footer: {
       copyright: 'All rights reserved to NSS IET DAVV.',
@@ -289,6 +293,8 @@ export const translations: Record<Language, TranslationSchema> = {
       errorRequired: 'कृपया सभी अनिवार्य फ़ील्ड सही ढंग से भरें।',
       errorGeneral: 'आपका पंजीकरण जमा करते समय एक त्रुटि हुई। कृपया पुनः प्रयास करें।',
       switchAccountBtn: 'गूगल खाता बदलें',
+      downloadFormBtn: 'आवेदन पत्र डाउनलोड / प्रिंट करें',
+      viewFormBtn: 'आवेदन पत्र देखें',
     },
     footer: {
       copyright: 'सर्वाधिकार सुरक्षित - राष्ट्रीय सेवा योजना, आई.ई.टी. डी.ए.वी.वी.',

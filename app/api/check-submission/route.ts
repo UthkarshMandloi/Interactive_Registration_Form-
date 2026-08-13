@@ -74,8 +74,33 @@ export async function GET(req: Request) {
       return gEmail === normalizedTarget || fEmail === normalizedTarget;
     });
 
+    let submission = null;
+    if (existing) {
+      const getCol = (keyNorms: string[]) => {
+        const idx = headers.findIndex((h: any) => keyNorms.includes(normalizeHeader(String(h))));
+        return idx !== -1 ? existing[idx] || '' : '';
+      };
+
+      submission = {
+        institute: getCol(['institutesname', 'institutename', 'institute']) || "Institute of Engineering & Technology, DAVV",
+        nssRegNo: getCol(['nssregno', 'nssregistrationnumber']),
+        name: getCol(['nameofvolunteer', 'volunteername', 'name']),
+        year: getCol(['year']),
+        category: getCol(['category']),
+        branch: getCol(['branch']),
+        fatherName: getCol(['fathersname', 'fathername']),
+        dob: getCol(['dob', 'dateofbirth']),
+        gender: getCol(['gender']),
+        contactNo: getCol(['contactnumber', 'contactno', 'contact', 'phone', 'mobile']),
+        email: getCol(['emailaddress', 'email', 'googleemail']) || email,
+        bloodGroup: getCol(['bloodgroup']),
+        address: getCol(['currentaddress', 'address']),
+      };
+    }
+
     return NextResponse.json({ 
       submitted: Boolean(existing), 
+      submission,
       configured: true 
     });
   } catch (error: any) {
