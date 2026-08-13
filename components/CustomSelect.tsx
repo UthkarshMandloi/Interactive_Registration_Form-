@@ -25,9 +25,15 @@ export default function CustomSelect({
   onFocus,
 }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const selectedOption = options.find((opt) => opt.value === value);
+
+  const filteredOptions = searchQuery.trim()
+    ? options.filter((opt) => opt.label.toLowerCase().includes(searchQuery.toLowerCase().trim()))
+    : options;
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -39,6 +45,16 @@ export default function CustomSelect({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Focus search input when dropdown opens
+  useEffect(() => {
+    if (isOpen && options.length > 8 && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+    if (!isOpen) {
+      setSearchQuery('');
+    }
+  }, [isOpen, options.length]);
 
   return (
     <div ref={containerRef} className="relative w-full">
@@ -67,31 +83,49 @@ export default function CustomSelect({
 
       {/* Floating Custom Neumorphic Popup Menu */}
       {isOpen && (
-        <div className="absolute top-[calc(100%+8px)] left-0 right-0 z-50 bg-[#e6edf5] rounded-2xl p-2 neu-card shadow-[12px_12px_28px_#b8c4d6,-12px_-12px_28px_#ffffff] border border-white/80 max-h-60 overflow-y-auto space-y-1">
-          {options.map((opt) => {
-            const isSelected = opt.value === value;
-            return (
-              <div
-                key={opt.value}
-                onClick={() => {
-                  onChange(opt.value);
-                  setIsOpen(false);
-                }}
-                className={`p-3.5 rounded-xl text-xs sm:text-sm font-bold cursor-pointer transition-all flex items-center justify-between ${
-                  isSelected
-                    ? 'bg-[#0B1B3D] text-[#FFB703] shadow-md'
-                    : 'text-[#0B1B3D] hover:bg-[#d5e0ee] hover:text-[#D90429]'
-                }`}
-              >
-                <span>{opt.label}</span>
-                {isSelected && (
-                  <svg className="w-4 h-4 text-[#FFB703]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-                  </svg>
-                )}
-              </div>
-            );
-          })}
+        <div className="absolute top-[calc(100%+8px)] left-0 right-0 z-50 bg-[#e6edf5] rounded-2xl p-2 neu-card shadow-[12px_12px_28px_#b8c4d6,-12px_-12px_28px_#ffffff] border border-white/80 max-h-72 overflow-y-auto space-y-1">
+          {options.length > 8 && (
+            <div className="p-1 mb-1 sticky top-0 bg-[#e6edf5] z-10">
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search..."
+                className="w-full p-2.5 rounded-xl bg-[#e6edf5] neu-input text-xs font-semibold text-[#0B1B3D] placeholder:text-[#475569]/50 outline-none"
+              />
+            </div>
+          )}
+          {filteredOptions.length === 0 ? (
+            <div className="p-3 text-center text-xs font-medium text-[#475569]">
+              No options found
+            </div>
+          ) : (
+            filteredOptions.map((opt) => {
+              const isSelected = opt.value === value;
+              return (
+                <div
+                  key={opt.value}
+                  onClick={() => {
+                    onChange(opt.value);
+                    setIsOpen(false);
+                  }}
+                  className={`p-3 rounded-xl text-xs sm:text-sm font-bold cursor-pointer transition-all flex items-center justify-between ${
+                    isSelected
+                      ? 'bg-[#0B1B3D] text-[#FFB703] shadow-md'
+                      : 'text-[#0B1B3D] hover:bg-[#d5e0ee] hover:text-[#D90429]'
+                  }`}
+                >
+                  <span className="pr-2">{opt.label}</span>
+                  {isSelected && (
+                    <svg className="w-4 h-4 text-[#FFB703] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </div>
+              );
+            })
+          )}
         </div>
       )}
 

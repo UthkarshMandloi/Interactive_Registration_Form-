@@ -131,6 +131,7 @@ export const translations: Record<Language, TranslationSchema> = {
         { value: '1st', label: '1st Year' },
         { value: '2nd', label: '2nd Year' },
         { value: '3rd', label: '3rd Year' },
+        { value: '4th', label: '4th Year' },
       ],
       categories: [
         { value: 'GEN', label: 'GEN (General)' },
@@ -150,6 +151,7 @@ export const translations: Record<Language, TranslationSchema> = {
         { value: 'B Des', label: 'B Design (B Des)' },
         { value: 'CSBS', label: 'Computer Science & Business System (CSBS)' },
         { value: 'IP', label: 'Industrial & Production (IP)' },
+        { value: 'MTech', label: 'M.Tech' },
       ],
       genders: [
         { value: 'Male', label: 'Male' },
@@ -239,6 +241,7 @@ export const translations: Record<Language, TranslationSchema> = {
         { value: '1st', label: 'प्रथम वर्ष (1st Year)' },
         { value: '2nd', label: 'द्वितीय वर्ष (2nd Year)' },
         { value: '3rd', label: 'तृतीय वर्ष (3rd Year)' },
+        { value: '4th', label: 'चतुर्थ वर्ष (4th Year)' },
       ],
       categories: [
         { value: 'GEN', label: 'सामान्य (GEN)' },
@@ -258,6 +261,7 @@ export const translations: Record<Language, TranslationSchema> = {
         { value: 'B Des', label: 'बी डिजाइन (B Des)' },
         { value: 'CSBS', label: 'कंप्यूटर साइंस एंड बिजनेस सिस्टम (CSBS)' },
         { value: 'IP', label: 'इंडस्ट्रियल एंड प्रोडक्शन (IP)' },
+        { value: 'MTech', label: 'एम.टेक (M.Tech)' },
       ],
       genders: [
         { value: 'Male', label: 'पुरुष (Male)' },
