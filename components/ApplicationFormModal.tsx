@@ -7,16 +7,22 @@ export interface ApplicationFormData {
   institute?: string;
   nssRegNo?: string;
   name: string;
+  course?: string;
   year: string;
   category: string;
   branch: string;
   fatherName: string;
+  motherName?: string;
   dob: string;
   gender: string;
   contactNo: string;
   email: string;
   bloodGroup?: string;
+  height?: string;
   address?: string;
+  interests?: string;
+  interestedVertical?: string;
+  nssCertificate?: string;
 }
 
 interface ApplicationFormModalProps {
@@ -42,6 +48,19 @@ export default function ApplicationFormModal({ isOpen, onClose, data }: Applicat
   const isOBC = catUpper.includes('OBC') || catUpper.includes('पिछड़ा');
   const isMinority = catUpper.includes('MINORITY') || catUpper.includes('अल्पसंख्यक');
 
+  const interestsStr = (data.interests || '').toLowerCase();
+  const isSinging = interestsStr.includes('singing') || interestsStr.includes('गायन');
+  const isDancing = interestsStr.includes('dancing') || interestsStr.includes('नृत्य');
+  const isSpeech = interestsStr.includes('speech') || interestsStr.includes('भाषण');
+  const isSocialService = interestsStr.includes('social') || interestsStr.includes('समाजसेवा');
+  const isOtherInterest = interestsStr.includes('other') || interestsStr.includes('अन्य');
+
+  const certUpper = (data.nssCertificate || '').toUpperCase().trim();
+  const hasCertA = /\bA\b/.test(certUpper);
+  const hasCertB = /\bB\b/.test(certUpper);
+  const hasCertC = /\bC\b/.test(certUpper);
+  const hasCertNone = certUpper === 'NONE' || certUpper === 'नहीं' || certUpper.includes('NONE') || certUpper.includes('नहीं') || (!hasCertA && !hasCertB && !hasCertC);
+
   const formattedDob = data.dob
     ? new Date(data.dob).toLocaleDateString('en-IN', {
         day: '2-digit',
@@ -49,6 +68,12 @@ export default function ApplicationFormModal({ isOpen, onClose, data }: Applicat
         year: 'numeric',
       })
     : '';
+
+  const courseDisplay = data.course === 'UG' 
+    ? 'UG (B.Tech / B.Des)' 
+    : data.course === 'PG' 
+    ? 'PG (M.Tech)' 
+    : data.course || '';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto bg-black/70 backdrop-blur-sm print-modal-backdrop">
@@ -150,7 +175,7 @@ export default function ApplicationFormModal({ isOpen, onClose, data }: Applicat
           </div>
         </div>
 
-        {/* Printable Form Content (Full height layout pushing signature to bottom) */}
+        {/* Printable Form Content */}
         <div id="nss-application-form-print-area" className="p-6 sm:p-10 font-serif text-black bg-white flex flex-col justify-between min-h-[750px]">
           
           <div>
@@ -192,7 +217,7 @@ export default function ApplicationFormModal({ isOpen, onClose, data }: Applicat
               </div>
             </div>
 
-            {/* Form Fields (1 to 18) */}
+            {/* Form Fields */}
             <div className="space-y-3.5 sm:space-y-4 text-xs sm:text-[13px] font-medium leading-relaxed">
               
               {/* 1. Institution Name */}
@@ -204,46 +229,27 @@ export default function ApplicationFormModal({ isOpen, onClose, data }: Applicat
               </div>
 
               {/* 2. Student Name */}
-              <div className="space-y-1">
-                <div className="flex items-baseline">
-                  <span className="font-bold min-w-[145px] text-black">2. विद्यार्थी का नाम:</span>
-                  <span className="w-20 font-bold text-black">हिन्दी में :</span>
-                  <span className="flex-1 border-b border-black px-1 font-semibold text-black"></span>
-                </div>
-                <div className="flex items-baseline pl-[145px]">
-                  <span className="w-20 font-bold text-black">अंग्रेजी में :</span>
-                  <span className="flex-1 border-b border-black px-1 font-bold uppercase tracking-wider text-black">
-                    {data.name}
-                  </span>
-                </div>
+              <div className="flex items-baseline">
+                <span className="font-bold min-w-[145px] text-black">2. विद्यार्थी का नाम:</span>
+                <span className="flex-1 border-b border-black px-1 font-semibold text-black uppercase tracking-wider">
+                  {data.name}
+                </span>
               </div>
 
               {/* 3. Father's Name */}
-              <div className="space-y-1">
-                <div className="flex items-baseline">
-                  <span className="font-bold min-w-[145px] text-black">3. पिता का नाम:</span>
-                  <span className="w-20 font-bold text-black">हिन्दी में :</span>
-                  <span className="flex-1 border-b border-black px-1 font-semibold text-black"></span>
-                </div>
-                <div className="flex items-baseline pl-[145px]">
-                  <span className="w-20 font-bold text-black">अंग्रेजी में :</span>
-                  <span className="flex-1 border-b border-black px-1 font-semibold uppercase text-black">
-                    {data.fatherName}
-                  </span>
-                </div>
+              <div className="flex items-baseline">
+                <span className="font-bold min-w-[145px] text-black">3. पिता का नाम:</span>
+                <span className="flex-1 border-b border-black px-1 font-semibold text-black uppercase">
+                  {data.fatherName}
+                </span>
               </div>
 
               {/* 4. Mother's Name */}
-              <div className="space-y-1">
-                <div className="flex items-baseline">
-                  <span className="font-bold min-w-[145px] text-black">4. माता का नाम:</span>
-                  <span className="w-20 font-bold text-black">हिन्दी में :</span>
-                  <span className="flex-1 border-b border-black px-1"></span>
-                </div>
-                <div className="flex items-baseline pl-[145px]">
-                  <span className="w-20 font-bold text-black">अंग्रेजी में :</span>
-                  <span className="flex-1 border-b border-black px-1"></span>
-                </div>
+              <div className="flex items-baseline">
+                <span className="font-bold min-w-[145px] text-black">4. माता का नाम:</span>
+                <span className="flex-1 border-b border-black px-1 font-semibold text-black uppercase">
+                  {data.motherName}
+                </span>
               </div>
 
               {/* 5. Date of Birth */}
@@ -278,7 +284,6 @@ export default function ApplicationFormModal({ isOpen, onClose, data }: Applicat
                 <div className="flex items-start flex-wrap gap-x-4 gap-y-1">
                   <span className="font-bold min-w-[145px] text-black">7. जाति वर्ग (Category):</span>
                   <div className="flex-1 space-y-1">
-                    {/* Category Row 1 */}
                     <div className="flex flex-wrap gap-x-5 gap-y-1">
                       <label className="inline-flex items-center space-x-1.5">
                         <span className={`w-3.5 h-3.5 border border-black flex items-center justify-center text-[10px] font-bold ${isGeneral ? 'bg-black text-white' : ''}`}>
@@ -299,7 +304,6 @@ export default function ApplicationFormModal({ isOpen, onClose, data }: Applicat
                         <span>अनुसूचित जनजाति (ST)</span>
                       </label>
                     </div>
-                    {/* Category Row 2 */}
                     <div className="flex flex-wrap gap-x-5 gap-y-1">
                       <label className="inline-flex items-center space-x-1.5">
                         <span className={`w-3.5 h-3.5 border border-black flex items-center justify-center text-[10px] font-bold ${isOBC ? 'bg-black text-white' : ''}`}>
@@ -318,15 +322,15 @@ export default function ApplicationFormModal({ isOpen, onClose, data }: Applicat
                 </div>
               </div>
 
-              {/* 8. Class */}
+              {/* 8. Class / Branch */}
               <div className="flex items-baseline">
-                <span className="font-bold min-w-[145px] text-black">8. कक्षा:</span>
+                <span className="font-bold min-w-[145px] text-black">8. कक्षा / शाखा:</span>
                 <span className="flex-1 border-b border-black px-1 font-semibold text-black">
                   {data.branch}
                 </span>
               </div>
 
-              {/* 9. Semester, Year */}
+              {/* 9. Semester / Year */}
               <div className="flex items-baseline">
                 <span className="font-bold min-w-[145px] text-black">9. सेमेस्टर, वर्ष:</span>
                 <span className="flex-1 border-b border-black px-1 font-semibold text-black">
@@ -334,108 +338,125 @@ export default function ApplicationFormModal({ isOpen, onClose, data }: Applicat
                 </span>
               </div>
 
-              {/* 10. Fee Receipt Details */}
-              <div className="flex items-baseline flex-wrap gap-x-4 gap-y-1">
-                <span className="font-bold min-w-[145px] text-black">10. शुल्क रसीद का विवरण:</span>
-                <div className="flex-1 flex flex-wrap gap-x-6 gap-y-1">
-                  <span>प्रवेश रसीद संख्या: <span className="border-b border-black inline-block min-w-[140px] px-1"></span></span>
-                  <span>दिनांक: <span className="border-b border-black inline-block min-w-[140px] px-1"></span></span>
-                </div>
-              </div>
-
-              {/* 11. Mobile Number */}
+              {/* 10. Mobile Number */}
               <div className="flex items-baseline">
-                <span className="font-bold min-w-[145px] text-black">11. मोबाइल नम्बर:</span>
+                <span className="font-bold min-w-[145px] text-black">10. मोबाइल नम्बर:</span>
                 <span className="flex-1 border-b border-black px-1 font-semibold text-black">
                   +91 {data.contactNo}
                 </span>
               </div>
 
-              {/* 12. Email ID */}
+              {/* 11. Email ID */}
               <div className="flex items-baseline">
-                <span className="font-bold min-w-[145px] text-black">12. ई-मेल आई.डी.:</span>
+                <span className="font-bold min-w-[145px] text-black">11. ई-मेल आई.डी.:</span>
                 <span className="flex-1 border-b border-black px-1 font-semibold text-black">
                   {data.email}
                 </span>
               </div>
 
-              {/* 13. Aadhaar Number */}
+              {/* 12. Blood Group */}
               <div className="flex items-baseline">
-                <span className="font-bold min-w-[145px] text-black">13. आधार नम्बर:</span>
-                <span className="flex-1 border-b border-black px-1"></span>
-              </div>
-
-              {/* 14. Blood Group */}
-              <div className="flex items-baseline">
-                <span className="font-bold min-w-[145px] text-black">14. ब्लड ग्रुप:</span>
+                <span className="font-bold min-w-[145px] text-black">12. ब्लड ग्रुप:</span>
                 <span className="flex-1 border-b border-black px-1 font-semibold text-black">
                   {data.bloodGroup || 'N/A'}
                 </span>
               </div>
 
-              {/* 15. Height */}
+              {/* 13. Height */}
               <div className="flex items-baseline">
-                <span className="font-bold min-w-[145px] text-black">15. ऊँचाई:</span>
-                <span className="flex-1 border-b border-black px-1"></span>
+                <span className="font-bold min-w-[145px] text-black">13. ऊँचाई (Height):</span>
+                <span className="flex-1 border-b border-black px-1 font-semibold text-black">
+                  {data.height || 'N/A'}
+                </span>
               </div>
 
-              {/* 16. Interests */}
+              {/* 14. Interests */}
               <div className="space-y-1">
                 <div className="flex items-start flex-wrap gap-x-4 gap-y-1">
-                  <span className="font-bold min-w-[145px] text-black">16. अभिरुचि (Interests):</span>
+                  <span className="font-bold min-w-[145px] text-black">14. अभिरुचि (Interests):</span>
                   <div className="flex-1 space-y-1">
                     <div className="flex flex-wrap gap-x-6 gap-y-1">
                       <label className="inline-flex items-center space-x-1.5">
-                        <span className="w-3.5 h-3.5 border border-black flex items-center justify-center text-[10px]"></span>
+                        <span className={`w-3.5 h-3.5 border border-black flex items-center justify-center text-[10px] ${isSinging ? 'bg-black text-white font-bold' : ''}`}>
+                          {isSinging ? '✓' : ''}
+                        </span>
                         <span>गायन (Singing)</span>
                       </label>
                       <label className="inline-flex items-center space-x-1.5">
-                        <span className="w-3.5 h-3.5 border border-black flex items-center justify-center text-[10px]"></span>
+                        <span className={`w-3.5 h-3.5 border border-black flex items-center justify-center text-[10px] ${isDancing ? 'bg-black text-white font-bold' : ''}`}>
+                          {isDancing ? '✓' : ''}
+                        </span>
                         <span>नृत्य (Dancing)</span>
                       </label>
                       <label className="inline-flex items-center space-x-1.5">
-                        <span className="w-3.5 h-3.5 border border-black flex items-center justify-center text-[10px]"></span>
+                        <span className={`w-3.5 h-3.5 border border-black flex items-center justify-center text-[10px] ${isSpeech ? 'bg-black text-white font-bold' : ''}`}>
+                          {isSpeech ? '✓' : ''}
+                        </span>
                         <span>भाषण (Speech)</span>
                       </label>
                     </div>
                     <div className="flex flex-wrap gap-x-6 gap-y-1">
                       <label className="inline-flex items-center space-x-1.5">
-                        <span className="w-3.5 h-3.5 border border-black flex items-center justify-center text-[10px] bg-black text-white font-bold">✓</span>
+                        <span className={`w-3.5 h-3.5 border border-black flex items-center justify-center text-[10px] ${isSocialService ? 'bg-black text-white font-bold' : ''}`}>
+                          {isSocialService ? '✓' : ''}
+                        </span>
                         <span>समाजसेवा (Social Service)</span>
                       </label>
                       <label className="inline-flex items-center space-x-1.5">
-                        <span className="w-3.5 h-3.5 border border-black flex items-center justify-center text-[10px]"></span>
-                        <span>अन्य (Other): <span className="border-b border-black inline-block min-w-[100px]"></span></span>
+                        <span className={`w-3.5 h-3.5 border border-black flex items-center justify-center text-[10px] ${isOtherInterest ? 'bg-black text-white font-bold' : ''}`}>
+                          {isOtherInterest ? '✓' : ''}
+                        </span>
+                        <span>अन्य (Other): <span className="border-b border-black inline-block min-w-[100px] px-1 font-semibold">{isOtherInterest ? data.interests : ''}</span></span>
                       </label>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* 17. Previous NSS Certificate */}
+              {/* 15. Interested Vertical */}
+              <div className="flex items-baseline">
+                <span className="font-bold min-w-[145px] text-black">15. इच्छुक वर्टिकल (Vertical):</span>
+                <span className="flex-1 border-b border-black px-1 font-semibold text-black">
+                  {data.interestedVertical || 'N/A'}
+                </span>
+              </div>
+
+              {/* 16. Previous NSS Certificate */}
               <div className="flex items-center flex-wrap gap-4">
-                <span className="font-bold min-w-[145px] text-black">17. रा.से.यो का पूर्व में प्रमाण पत्र:</span>
+                <span className="font-bold min-w-[145px] text-black">16. रा.से.यो का पूर्व में प्रमाण पत्र:</span>
                 <div className="flex items-center space-x-6">
                   <label className="inline-flex items-center space-x-1.5">
-                    <span className="w-3.5 h-3.5 border border-black flex items-center justify-center text-[10px]"></span>
+                    <span className={`w-3.5 h-3.5 border border-black flex items-center justify-center text-[10px] ${hasCertNone ? 'bg-black text-white font-bold' : ''}`}>
+                      {hasCertNone ? '✓' : ''}
+                    </span>
+                    <span>नहीं (None)</span>
+                  </label>
+                  <label className="inline-flex items-center space-x-1.5">
+                    <span className={`w-3.5 h-3.5 border border-black flex items-center justify-center text-[10px] ${hasCertA ? 'bg-black text-white font-bold' : ''}`}>
+                      {hasCertA ? '✓' : ''}
+                    </span>
                     <span>A</span>
                   </label>
                   <label className="inline-flex items-center space-x-1.5">
-                    <span className="w-3.5 h-3.5 border border-black flex items-center justify-center text-[10px]"></span>
+                    <span className={`w-3.5 h-3.5 border border-black flex items-center justify-center text-[10px] ${hasCertB ? 'bg-black text-white font-bold' : ''}`}>
+                      {hasCertB ? '✓' : ''}
+                    </span>
                     <span>B</span>
                   </label>
                   <label className="inline-flex items-center space-x-1.5">
-                    <span className="w-3.5 h-3.5 border border-black flex items-center justify-center text-[10px]"></span>
+                    <span className={`w-3.5 h-3.5 border border-black flex items-center justify-center text-[10px] ${hasCertC ? 'bg-black text-white font-bold' : ''}`}>
+                      {hasCertC ? '✓' : ''}
+                    </span>
                     <span>C</span>
                   </label>
                 </div>
               </div>
 
-              {/* 18. Social Service Experience */}
+              {/* 17. Social Service Experience */}
               <div className="flex items-baseline">
-                <span className="font-bold min-w-[145px] text-black">18. सामाजिक सेवा का पूर्व अनुभव (यदि हो तो)</span>
+                <span className="font-bold min-w-[145px] text-black">17. सामाजिक सेवा का पूर्व अनुभव (यदि हो तो):</span>
                 <span className="flex-1 border-b border-black px-1 font-semibold text-black">
-                  {data.nssRegNo ? `NSS Registration Number: ${data.nssRegNo}` : ''}
+                  {data.nssRegNo ? `NSS Registration Number: ${data.nssRegNo}` : 'N/A'}
                 </span>
               </div>
 
@@ -449,7 +470,7 @@ export default function ApplicationFormModal({ isOpen, onClose, data }: Applicat
             </div>
           </div>
 
-          {/* Bottom Signatures Section (Pushed to bottom of page) */}
+          {/* Bottom Signatures Section */}
           <div className="mt-auto pt-8 flex items-end justify-between text-xs sm:text-xs font-bold text-black">
             <div className="text-center">
               <p className="mb-0.5">स्वयंसेवक/स्वयंसेविका</p>

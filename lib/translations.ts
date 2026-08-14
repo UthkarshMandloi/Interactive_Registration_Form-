@@ -18,6 +18,8 @@ export interface TranslationSchema {
     close: string;
   };
   form: {
+    instituteLabel: string;
+    institutePlaceholder: string;
     nssRegNoLabel: string;
     nssRegNoPlaceholder: string;
     nssRegNoBadge: string;
@@ -32,6 +34,10 @@ export interface TranslationSchema {
     branchPlaceholder: string;
     fatherNameLabel: string;
     fatherNamePlaceholder: string;
+    motherNameLabel: string;
+    motherNamePlaceholder: string;
+    courseLabel: string;
+    coursePlaceholder: string;
     dobLabel: string;
     dobPlaceholder: string;
     genderLabel: string;
@@ -44,6 +50,16 @@ export interface TranslationSchema {
     emailNote: string;
     bloodGroupLabel: string;
     bloodGroupPlaceholder: string;
+    heightLabel: string;
+    heightPlaceholder: string;
+    interestsLabel: string;
+    interestsPlaceholder: string;
+    otherInterestLabel: string;
+    otherInterestPlaceholder: string;
+    interestedVerticalLabel: string;
+    interestedVerticalPlaceholder: string;
+    nssCertificateLabel: string;
+    nssCertificatePlaceholder: string;
     addressLabel: string;
     addressPlaceholder: string;
     submitButton: string;
@@ -54,8 +70,12 @@ export interface TranslationSchema {
     years: { value: string; label: string }[];
     categories: { value: string; label: string }[];
     branches: { value: string; label: string }[];
+    courses: { value: string; label: string }[];
     genders: { value: string; label: string }[];
     bloodGroups: { value: string; label: string }[];
+    interests: { value: string; label: string }[];
+    interestedVerticals: { value: string; label: string }[];
+    nssCertificates: { value: string; label: string }[];
   };
   status: {
     alreadySubmittedTitle: string;
@@ -96,6 +116,8 @@ export const translations: Record<Language, TranslationSchema> = {
       close: 'Close',
     },
     form: {
+      instituteLabel: 'Institute Name',
+      institutePlaceholder: 'Institute of Engineering & Technology (IET DAVV), Indore',
       nssRegNoLabel: 'NSS Reg. No.',
       nssRegNoPlaceholder: 'Enter your NSS Registration Number',
       nssRegNoBadge: '(if you have)',
@@ -110,6 +132,10 @@ export const translations: Record<Language, TranslationSchema> = {
       branchPlaceholder: 'Enter your Branch',
       fatherNameLabel: "Father's Name",
       fatherNamePlaceholder: "Enter Father's Full Name",
+      motherNameLabel: "Mother's Name",
+      motherNamePlaceholder: "Enter Mother's Full Name",
+      courseLabel: 'Course',
+      coursePlaceholder: 'Select Course (UG / PG)',
       dobLabel: 'Date of Birth (DOB)',
       dobPlaceholder: 'Select DOB',
       genderLabel: 'Gender',
@@ -122,6 +148,16 @@ export const translations: Record<Language, TranslationSchema> = {
       emailNote: 'Must be a valid @gmail.com address',
       bloodGroupLabel: 'Blood Group (Optional)',
       bloodGroupPlaceholder: 'Select Blood Group',
+      heightLabel: 'Height',
+      heightPlaceholder: 'Enter height (e.g. 170 cm)',
+      interestsLabel: 'Interests',
+      interestsPlaceholder: 'Select your interests',
+      otherInterestLabel: 'Specify Other Interest',
+      otherInterestPlaceholder: 'Enter your interest...',
+      interestedVerticalLabel: 'Interested Vertical',
+      interestedVerticalPlaceholder: 'Select Interested Vertical',
+      nssCertificateLabel: 'Previous NSS Certificate',
+      nssCertificatePlaceholder: 'Select certificate if any',
       addressLabel: 'Current Address',
       addressPlaceholder: 'Enter your present residence address...',
       submitButton: 'Submit Registration Form',
@@ -155,6 +191,10 @@ export const translations: Record<Language, TranslationSchema> = {
         { value: 'IP', label: 'Industrial & Production (IP)' },
         { value: 'MTech', label: 'M.Tech' },
       ],
+      courses: [
+        { value: 'UG', label: 'UG (B.Tech / B.Des)' },
+        { value: 'PG', label: 'PG (M.Tech)' },
+      ],
       genders: [
         { value: 'Male', label: 'Male' },
         { value: 'Female', label: 'Female' },
@@ -169,6 +209,28 @@ export const translations: Record<Language, TranslationSchema> = {
         { value: 'O-', label: 'O-' },
         { value: 'AB+', label: 'AB+' },
         { value: 'AB-', label: 'AB-' },
+      ],
+      interests: [
+        { value: 'Singing', label: 'Singing' },
+        { value: 'Dancing', label: 'Dancing' },
+        { value: 'Speech', label: 'Speech' },
+        { value: 'Social Service', label: 'Social Service' },
+        { value: 'Other', label: 'Other' },
+      ],
+      interestedVerticals: [
+        { value: 'Events & Outreach', label: 'Events & Outreach' },
+        { value: 'Art & Creativity Cell', label: 'Art & Creativity Cell' },
+        { value: 'NSS Editorial (Content)', label: 'NSS Editorial (Content)' },
+        { value: 'Pixel Crew (Production)', label: 'Pixel Crew (Production)' },
+        { value: 'Impact Innovators (SocioTech)', label: 'Impact Innovators (SocioTech)' },
+        { value: 'Design Studio', label: 'Design Studio' },
+        { value: 'Technical', label: 'Technical' },
+      ],
+      nssCertificates: [
+        { value: 'None', label: 'None' },
+        { value: 'A Certificate', label: 'A Certificate' },
+        { value: 'B Certificate', label: 'B Certificate' },
+        { value: 'C Certificate', label: 'C Certificate' },
       ],
     },
     status: {
@@ -208,6 +270,8 @@ export const translations: Record<Language, TranslationSchema> = {
       close: 'बंद करें',
     },
     form: {
+      instituteLabel: 'संस्था का नाम',
+      institutePlaceholder: 'Institute of Engineering & Technology (IET DAVV), Indore',
       nssRegNoLabel: 'एन.एस.एस. पंजीकरण संख्या',
       nssRegNoPlaceholder: 'अपनी एन.एस.एस. पंजीकरण संख्या दर्ज करें',
       nssRegNoBadge: '(यदि आपके पास है)',
@@ -222,7 +286,11 @@ export const translations: Record<Language, TranslationSchema> = {
       branchPlaceholder: 'अपनी शाखा दर्ज करें',
       fatherNameLabel: 'पिता का नाम',
       fatherNamePlaceholder: 'पिता का पूरा नाम दर्ज करें',
-      dobLabel: 'जन्म तिथि (DOB)',
+      motherNameLabel: 'माता का नाम',
+      motherNamePlaceholder: 'माता का पूरा नाम दर्ज करें',
+      courseLabel: 'कोर्स',
+      coursePlaceholder: 'कोर्स चुनें (UG / PG)',
+      dobLabel: 'जन्म तिथि',
       dobPlaceholder: 'जन्म तिथि चुनें',
       genderLabel: 'लिंग',
       genderPlaceholder: 'लिंग चुनें',
@@ -234,6 +302,16 @@ export const translations: Record<Language, TranslationSchema> = {
       emailNote: 'केवल मान्य @gmail.com ईमेल ही स्वीकार्य है',
       bloodGroupLabel: 'रक्त समूह (वैकल्पिक)',
       bloodGroupPlaceholder: 'रक्त समूह चुनें',
+      heightLabel: 'ऊँचाई',
+      heightPlaceholder: 'ऊँचाई दर्ज करें (उदा. 170 सेमी)',
+      interestsLabel: 'अभिरुचि',
+      interestsPlaceholder: 'अपनी अभिरुचि चुनें',
+      otherInterestLabel: 'अन्य अभिरुचि',
+      otherInterestPlaceholder: 'अपनी अभिरुचि दर्ज करें...',
+      interestedVerticalLabel: 'इच्छुक वर्टिकल',
+      interestedVerticalPlaceholder: 'इच्छुक वर्टिकल चुनें',
+      nssCertificateLabel: 'रा.से.यो का पूर्व में प्रमाण पत्र',
+      nssCertificatePlaceholder: 'प्रमाण पत्र चुनें (यदि हो तो)',
       addressLabel: 'वर्तमान पता',
       addressPlaceholder: 'अपना वर्तमान निवास स्थान का पता दर्ज करें...',
       submitButton: 'पंजीकरण फॉर्म सबमिट करें',
@@ -267,10 +345,14 @@ export const translations: Record<Language, TranslationSchema> = {
         { value: 'IP', label: 'इंडस्ट्रियल एंड प्रोडक्शन (IP)' },
         { value: 'MTech', label: 'एम.टेक (M.Tech)' },
       ],
+      courses: [
+        { value: 'UG', label: 'UG (B.Tech / B.Des)' },
+        { value: 'PG', label: 'PG (M.Tech)' },
+      ],
       genders: [
-        { value: 'Male', label: 'पुरुष (Male)' },
-        { value: 'Female', label: 'महिला (Female)' },
-        { value: 'Other', label: 'अन्य (Other)' },
+        { value: 'Male', label: 'पुरुष' },
+        { value: 'Female', label: 'महिला' },
+        { value: 'Other', label: 'अन्य' },
       ],
       bloodGroups: [
         { value: 'A+', label: 'A+' },
@@ -281,6 +363,28 @@ export const translations: Record<Language, TranslationSchema> = {
         { value: 'O-', label: 'O-' },
         { value: 'AB+', label: 'AB+' },
         { value: 'AB-', label: 'AB-' },
+      ],
+      interests: [
+        { value: 'Singing', label: 'गायन' },
+        { value: 'Dancing', label: 'नृत्य' },
+        { value: 'Speech', label: 'भाषण' },
+        { value: 'Social Service', label: 'समाजसेवा' },
+        { value: 'Other', label: 'अन्य' },
+      ],
+      interestedVerticals: [
+        { value: 'Events & Outreach', label: 'Events & Outreach' },
+        { value: 'Art & Creativity Cell', label: 'Art & Creativity Cell' },
+        { value: 'NSS Editorial (Content)', label: 'NSS Editorial (Content)' },
+        { value: 'Pixel Crew (Production)', label: 'Pixel Crew (Production)' },
+        { value: 'Impact Innovators (SocioTech)', label: 'Impact Innovators (SocioTech)' },
+        { value: 'Design Studio', label: 'Design Studio' },
+        { value: 'Technical', label: 'Technical' },
+      ],
+      nssCertificates: [
+        { value: 'None', label: 'कोई नहीं' },
+        { value: 'A Certificate', label: 'A प्रमाण पत्र' },
+        { value: 'B Certificate', label: 'B प्रमाण पत्र' },
+        { value: 'C Certificate', label: 'C प्रमाण पत्र' },
       ],
     },
     status: {

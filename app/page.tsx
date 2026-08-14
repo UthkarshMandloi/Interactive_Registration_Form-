@@ -29,18 +29,26 @@ export default function RegistrationPage() {
   const showNssRegNo = process.env.NEXT_PUBLIC_SHOW_NSS_REG_NO === 'true';
 
   const [form, setForm] = useState({
+    institute: 'Institute of Engineering & Technology (IET DAVV), Indore',
     nssRegNo: '',
     name: '',
+    course: '',
     year: '',
     category: '',
     branch: '',
     fatherName: '',
+    motherName: '',
     dob: '',
     gender: '',
     contactNo: '',
     email: '',
     bloodGroup: '',
+    height: '',
     address: '',
+    interests: '',
+    otherInterest: '',
+    interestedVertical: '',
+    nssCertificate: '',
   });
 
   const t = translations[lang];
@@ -176,6 +184,10 @@ export default function RegistrationPage() {
       return;
     }
 
+    const finalInterests = form.interests === 'Other'
+      ? (form.otherInterest.trim() ? `Other: ${form.otherInterest.trim()}` : 'Other')
+      : form.interests;
+
     setStatus('submitting');
 
     try {
@@ -184,18 +196,25 @@ export default function RegistrationPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           googleEmail: user.email,
+          institute: form.institute,
           nssRegNo: form.nssRegNo,
           name: form.name,
+          course: form.course,
           year: form.year,
           category: form.category,
           branch: form.branch,
           fatherName: form.fatherName,
+          motherName: form.motherName,
           dob: form.dob,
           gender: form.gender,
           contactNo: cleanPhone,
           email: form.email,
           bloodGroup: form.bloodGroup,
+          height: form.height,
           address: form.address,
+          interests: finalInterests,
+          interestedVertical: form.interestedVertical,
+          nssCertificate: form.nssCertificate,
         }),
       });
 
@@ -203,7 +222,7 @@ export default function RegistrationPage() {
 
       if (res.ok && data.success) {
         setStatus('success');
-        setSubmittedData({ ...form });
+        setSubmittedData({ ...form, interests: finalInterests });
         localStorage.removeItem(`nss_draft_${user.email}`);
         fetch(`/api/draft?email=${encodeURIComponent(user.email)}`, { method: 'DELETE' }).catch(() => {});
       } else if (res.status === 409 || data.error === 'ALREADY_SUBMITTED') {
@@ -400,6 +419,22 @@ export default function RegistrationPage() {
                   </div>
                 )}
 
+                {/* Institute Name (Required) */}
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-xs font-black text-[#0B1B3D] uppercase tracking-wider ml-1">
+                    {t.form.instituteLabel} <span className="text-[#D90429]">*</span>
+                  </label>
+                  <input
+                    required
+                    type="text"
+                    value={form.institute}
+                    onFocus={handleFieldInteraction}
+                    onChange={(e) => setForm({ ...form, institute: e.target.value })}
+                    placeholder={t.form.institutePlaceholder}
+                    className="w-full p-4 rounded-2xl bg-[#e6edf5] neu-input text-[#0B1B3D] placeholder:text-[#475569]/40 outline-none text-sm font-medium"
+                  />
+                </div>
+
                 {/* Name Of Volunteer */}
                 <div className="space-y-2">
                   <label className="text-xs font-black text-[#0B1B3D] uppercase tracking-wider ml-1">
@@ -413,6 +448,21 @@ export default function RegistrationPage() {
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                     placeholder={t.form.namePlaceholder}
                     className="w-full p-4 rounded-2xl bg-[#e6edf5] neu-input text-[#0B1B3D] placeholder:text-[#475569]/40 outline-none text-sm font-medium"
+                  />
+                </div>
+
+                {/* Course Dropdown */}
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-[#0B1B3D] uppercase tracking-wider ml-1">
+                    {t.form.courseLabel} <span className="text-[#D90429]">*</span>
+                  </label>
+                  <CustomSelect
+                    required
+                    value={form.course}
+                    onChange={(val) => setForm({ ...form, course: val })}
+                    options={t.options.courses}
+                    placeholder={t.form.coursePlaceholder}
+                    onFocus={handleFieldInteraction}
                   />
                 </div>
 
@@ -474,6 +524,22 @@ export default function RegistrationPage() {
                     onFocus={handleFieldInteraction}
                     onChange={(e) => setForm({ ...form, fatherName: e.target.value })}
                     placeholder={t.form.fatherNamePlaceholder}
+                    className="w-full p-4 rounded-2xl bg-[#e6edf5] neu-input text-[#0B1B3D] placeholder:text-[#475569]/40 outline-none text-sm font-medium"
+                  />
+                </div>
+
+                {/* Mother's Name */}
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-[#0B1B3D] uppercase tracking-wider ml-1">
+                    {t.form.motherNameLabel} <span className="text-[#D90429]">*</span>
+                  </label>
+                  <input
+                    required
+                    type="text"
+                    value={form.motherName}
+                    onFocus={handleFieldInteraction}
+                    onChange={(e) => setForm({ ...form, motherName: e.target.value })}
+                    placeholder={t.form.motherNamePlaceholder}
                     className="w-full p-4 rounded-2xl bg-[#e6edf5] neu-input text-[#0B1B3D] placeholder:text-[#475569]/40 outline-none text-sm font-medium"
                   />
                 </div>
@@ -561,6 +627,75 @@ export default function RegistrationPage() {
                     onChange={(val) => setForm({ ...form, bloodGroup: val })}
                     options={t.options.bloodGroups}
                     placeholder={t.form.bloodGroupPlaceholder}
+                    onFocus={handleFieldInteraction}
+                  />
+                </div>
+
+                {/* Height Input (Required) */}
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-[#0B1B3D] uppercase tracking-wider ml-1">
+                    {t.form.heightLabel} <span className="text-[#D90429]">*</span>
+                  </label>
+                  <input
+                    required
+                    type="text"
+                    value={form.height}
+                    onFocus={handleFieldInteraction}
+                    onChange={(e) => setForm({ ...form, height: e.target.value })}
+                    placeholder={t.form.heightPlaceholder}
+                    className="w-full p-4 rounded-2xl bg-[#e6edf5] neu-input text-[#0B1B3D] placeholder:text-[#475569]/40 outline-none text-sm font-medium"
+                  />
+                </div>
+
+                {/* Interests Dropdown */}
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-[#0B1B3D] uppercase tracking-wider ml-1">
+                    {t.form.interestsLabel}
+                  </label>
+                  <CustomSelect
+                    value={form.interests}
+                    onChange={(val) => setForm({ ...form, interests: val })}
+                    options={t.options.interests}
+                    placeholder={t.form.interestsPlaceholder}
+                    onFocus={handleFieldInteraction}
+                  />
+                  {form.interests === 'Other' && (
+                    <input
+                      type="text"
+                      value={form.otherInterest}
+                      onFocus={handleFieldInteraction}
+                      onChange={(e) => setForm({ ...form, otherInterest: e.target.value })}
+                      placeholder={t.form.otherInterestPlaceholder}
+                      className="w-full mt-2 p-3 rounded-xl bg-[#e6edf5] neu-input text-[#0B1B3D] placeholder:text-[#475569]/40 outline-none text-sm font-medium"
+                    />
+                  )}
+                </div>
+
+                {/* Interested Vertical Dropdown (Required) */}
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-[#0B1B3D] uppercase tracking-wider ml-1">
+                    {t.form.interestedVerticalLabel} <span className="text-[#D90429]">*</span>
+                  </label>
+                  <CustomSelect
+                    required
+                    value={form.interestedVertical}
+                    onChange={(val) => setForm({ ...form, interestedVertical: val })}
+                    options={t.options.interestedVerticals}
+                    placeholder={t.form.interestedVerticalPlaceholder}
+                    onFocus={handleFieldInteraction}
+                  />
+                </div>
+
+                {/* Previous NSS Certificate */}
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-xs font-black text-[#0B1B3D] uppercase tracking-wider ml-1">
+                    {t.form.nssCertificateLabel}
+                  </label>
+                  <CustomSelect
+                    value={form.nssCertificate}
+                    onChange={(val) => setForm({ ...form, nssCertificate: val })}
+                    options={t.options.nssCertificates}
+                    placeholder={t.form.nssCertificatePlaceholder}
                     onFocus={handleFieldInteraction}
                   />
                 </div>

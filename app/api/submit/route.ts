@@ -12,15 +12,21 @@ const DEFAULT_HEADERS = [
   "Institute's Name",
   'NSS Reg.  No.',
   'Name Of Volunteer',
+  "Father's Name",
+  "Mother's Name",
+  'Course',
   'Year',
   'Category',
   'Branch',
-  "Father's Name",
   'DOB',
   'Gender',
   'Contact Number',
   'Email Address',
   'Blood Group',
+  'Height',
+  'Interests',
+  'Interested Vertical',
+  'Previous NSS Certificate',
   'Current Address',
 ];
 
@@ -48,22 +54,29 @@ export async function POST(req: Request) {
     const body = await req.json();
     const {
       googleEmail,
+      institute,
       nssRegNo,
       name,
+      course,
       year,
       category,
       branch,
       fatherName,
+      motherName,
       dob,
       gender,
       contactNo,
       email,
       bloodGroup,
+      height,
       address,
+      interests,
+      interestedVertical,
+      nssCertificate,
     } = body;
 
     // Validate mandatory fields
-    if (!name || !year || !category || !branch || !fatherName || !dob || !gender || !contactNo || !email || !address) {
+    if (!name || !course || !year || !category || !branch || !fatherName || !motherName || !dob || !gender || !contactNo || !email || !height || !interestedVertical || !address) {
       return NextResponse.json(
         { success: false, error: 'Missing mandatory fields' },
         { status: 400 }
@@ -125,15 +138,19 @@ export async function POST(req: Request) {
     } else {
       sheetHeaders = values[0].map((h: any) => String(h).trim());
 
-      // Ensure "Institute's Name" column exists in sheet headers
-      const hasInstituteHeader = sheetHeaders.some((h) => {
-        const norm = normalizeHeader(h);
-        return norm === 'institutesname' || norm === 'institutename' || norm === 'institute';
-      });
+      // Ensure all DEFAULT_HEADERS exist in sheet headers (append missing columns)
+      let headersUpdated = false;
+      for (const defaultHeader of DEFAULT_HEADERS) {
+        const normDef = normalizeHeader(defaultHeader);
+        const exists = sheetHeaders.some((h) => normalizeHeader(h) === normDef);
+        if (!exists) {
+          sheetHeaders.push(defaultHeader);
+          headersUpdated = true;
+        }
+      }
 
-      if (!hasInstituteHeader) {
-        sheetHeaders.push("Institute's Name");
-        // Update header row in Google Sheet to include Institute's Name
+      if (headersUpdated) {
+        // Update header row in Google Sheet to include all new columns
         const headerUpdateUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/A1:Z1?valueInputOption=USER_ENTERED`;
         await fetch(headerUpdateUrl, {
           method: 'PUT',
@@ -196,9 +213,9 @@ export async function POST(req: Request) {
 
       'googleemail': (googleEmail || email).trim(),
 
-      'institutesname': CONSTANT_INSTITUTE_NAME,
-      'institutename': CONSTANT_INSTITUTE_NAME,
-      'institute': CONSTANT_INSTITUTE_NAME,
+      'institutesname': institute ? institute.trim() : CONSTANT_INSTITUTE_NAME,
+      'institutename': institute ? institute.trim() : CONSTANT_INSTITUTE_NAME,
+      'institute': institute ? institute.trim() : CONSTANT_INSTITUTE_NAME,
 
       'nssregno': nssRegNo ? nssRegNo.trim() : 'N/A',
       'nssregistrationnumber': nssRegNo ? nssRegNo.trim() : 'N/A',
@@ -207,12 +224,17 @@ export async function POST(req: Request) {
       'volunteername': name.trim(),
       'name': name.trim(),
 
+      'course': course ? course.trim() : '',
+
       'year': year,
       'category': category,
       'branch': branch,
 
       'fathersname': fatherName.trim(),
       'fathername': fatherName.trim(),
+
+      'mothersname': motherName ? motherName.trim() : '',
+      'mothername': motherName ? motherName.trim() : '',
 
       'dob': dob,
       'dateofbirth': dob,
@@ -230,6 +252,21 @@ export async function POST(req: Request) {
       'email': email.trim(),
 
       'bloodgroup': bloodGroup ? bloodGroup.trim() : 'N/A',
+
+      'height': height ? height.trim() : 'N/A',
+      'heightincm': height ? height.trim() : 'N/A',
+
+      'interests': interests ? interests.trim() : 'N/A',
+      'interest': interests ? interests.trim() : 'N/A',
+      'otherinterest': interests ? interests.trim() : 'N/A',
+      'otherinterests': interests ? interests.trim() : 'N/A',
+
+      'interestedvertical': interestedVertical ? interestedVertical.trim() : 'N/A',
+      'vertical': interestedVertical ? interestedVertical.trim() : 'N/A',
+
+      'previousnsscertificate': nssCertificate ? nssCertificate.trim() : 'N/A',
+      'nsscertificate': nssCertificate ? nssCertificate.trim() : 'N/A',
+      'nsscert': nssCertificate ? nssCertificate.trim() : 'N/A',
 
       'currentaddress': address.trim(),
       'address': address.trim(),
