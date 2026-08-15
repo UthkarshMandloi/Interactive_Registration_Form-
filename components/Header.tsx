@@ -38,8 +38,11 @@ export default function Header({ lang, onToggleLang, t, user, onSwitchAccount }:
               <h1 className="text-xs font-black text-[#0B1B3D] tracking-wider uppercase leading-tight truncate">
                 NSS IET DAVV
               </h1>
-              <p className="text-[10px] text-[#D90429] font-bold tracking-wide truncate">
-                {t.header.orgSubtitle}
+              <p className="text-[10px] text-[#D90429] font-bold tracking-wide truncate flex items-center gap-1.5">
+                <span>{t.header.orgSubtitle}</span>
+                <span className="bg-[#0B1B3D] text-[#FFB703] text-[9px] px-1.5 py-0.2 rounded font-black tracking-normal uppercase">
+                  {t.header.sessionTag}
+                </span>
               </p>
             </div>
           </div>
@@ -117,9 +120,14 @@ export default function Header({ lang, onToggleLang, t, user, onSwitchAccount }:
             <h1 className="text-base font-black text-[#0B1B3D] tracking-wider uppercase leading-tight">
               {t.header.orgTitle}
             </h1>
-            <p className="text-xs text-[#D90429] font-bold tracking-wide">
-              {t.header.orgSubtitle}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-xs text-[#D90429] font-bold tracking-wide">
+                {t.header.orgSubtitle}
+              </p>
+              <span className="bg-[#0B1B3D] text-[#FFB703] text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider shadow-sm">
+                {t.header.sessionTag}
+              </span>
+            </div>
           </div>
         </div>
 

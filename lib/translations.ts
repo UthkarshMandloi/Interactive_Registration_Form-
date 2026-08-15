@@ -4,6 +4,7 @@ export interface TranslationSchema {
   header: {
     orgTitle: string;
     orgSubtitle: string;
+    sessionTag: string;
     formTitle: string;
     formSubtitle: string;
     loginRequiredNotice: string;
@@ -102,7 +103,8 @@ export const translations: Record<Language, TranslationSchema> = {
     header: {
       orgTitle: 'NATIONAL SERVICE SCHEME (NSS)',
       orgSubtitle: 'IET DAVV, Indore',
-      formTitle: 'Volunteer Registration Form',
+      sessionTag: 'Session 2026-27',
+      formTitle: 'Volunteer Registration Form (Session 2026-27)',
       formSubtitle: 'Join us in serving the nation with dedication and passion',
       loginRequiredNotice: 'Please sign in with Google to fill out the registration form.',
       loggedInAs: 'Logged in as:',
@@ -256,7 +258,8 @@ export const translations: Record<Language, TranslationSchema> = {
     header: {
       orgTitle: 'राष्ट्रीय सेवा योजना (NSS)',
       orgSubtitle: 'आई.ई.टी. डी.ए.वी.वी., इंदौर',
-      formTitle: 'स्वयंसेवक पंजीकरण फॉर्म',
+      sessionTag: 'सत्र 2026-27',
+      formTitle: 'स्वयंसेवक पंजीकरण फॉर्म (सत्र 2026-27)',
       formSubtitle: 'समर्पण और उत्साह के साथ राष्ट्र सेवा में हमारे साथ जुड़ें',
       loginRequiredNotice: 'पंजीकरण फॉर्म भरने के लिए कृपया Google के साथ साइन इन करें।',
       loggedInAs: 'लॉग इन खाते:',

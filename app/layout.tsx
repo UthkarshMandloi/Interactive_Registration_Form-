@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NSS IET DAVV - Volunteer Registration Form",
-  description: "Official National Service Scheme (NSS) Volunteer Registration Form for Institute of Engineering & Technology, DAVV Indore.",
+  title: "NSS IET DAVV - Volunteer Registration Form (Session 2026-27)",
+  description: "Official National Service Scheme (NSS) Volunteer Registration Form for Institute of Engineering & Technology, DAVV Indore (Session 2026-27).",
   icons: {
     icon: [
       { url: '/NSS_logo_Fav.png?v=2', type: 'image/png' },

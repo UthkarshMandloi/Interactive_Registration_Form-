@@ -268,9 +268,14 @@ export default function RegistrationPage() {
           <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-[#0B1B3D] tracking-tight uppercase leading-tight mb-2">
             {t.header.orgTitle}
           </h1>
-          <h2 className="text-base sm:text-2xl font-black text-[#D90429] tracking-wide mb-2">
-            {t.header.orgSubtitle}
-          </h2>
+          <div className="flex items-center justify-center gap-2 mb-3 flex-wrap">
+            <h2 className="text-base sm:text-2xl font-black text-[#D90429] tracking-wide">
+              {t.header.orgSubtitle}
+            </h2>
+            <span className="bg-[#0B1B3D] text-[#FFB703] text-xs sm:text-sm px-3.5 py-1 rounded-full font-black uppercase tracking-wider shadow-md border border-[#FFB703]/30">
+              {t.header.sessionTag}
+            </span>
+          </div>
           <p className="text-xs sm:text-sm text-[#475569] max-w-lg mx-auto font-medium">
             {t.header.formSubtitle}
           </p>

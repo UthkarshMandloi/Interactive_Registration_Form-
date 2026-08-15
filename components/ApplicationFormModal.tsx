@@ -152,8 +152,8 @@ export default function ApplicationFormModal({ isOpen, onClose, data }: Applicat
               NSS
             </div>
             <div>
-              <h3 className="font-bold text-sm sm:text-base">DAVV NSS Application Form</h3>
-              <p className="text-xs text-white/70">राष्ट्रीय सेवा योजना में प्रवेश हेतु आवेदन पत्र</p>
+              <h3 className="font-bold text-sm sm:text-base">DAVV NSS Application Form (Session 2026-27)</h3>
+              <p className="text-xs text-white/70">राष्ट्रीय सेवा योजना में प्रवेश हेतु आवेदन पत्र (सत्र 2026-27)</p>
             </div>
           </div>
           <div className="flex items-center space-x-3">
@@ -201,7 +201,7 @@ export default function ApplicationFormModal({ isOpen, onClose, data }: Applicat
                   देवी अहिल्या विश्वविद्यालय, इंदौर (DAVV)
                 </h2>
                 <p className="text-xs sm:text-xs font-bold text-black font-sans">
-                  विद्यार्थियों के लिए राष्ट्रीय सेवा योजना में प्रवेश हेतु आवेदन पत्र
+                  विद्यार्थियों के लिए राष्ट्रीय सेवा योजना में प्रवेश हेतु आवेदन पत्र (सत्र 2026-27)
                 </p>
               </div>
 
